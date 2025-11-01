@@ -202,82 +202,89 @@ class FoodEventAgent:
                 results['processed_tier3_cohere'] += 1
 
                 # Track LLM usage
+                # Use model name from config
+                model_name = os.getenv('COHERE_MODEL', 'command-r')
                 self.db.save_llm_usage(
                     provider='cohere',
-                    model='command-r-plus',
+                    model=model_name,
                     email_id=email['id'],
                     purpose='extraction',
-                    success=not extraction.get('error'),
+                    success=extraction and not extraction.get('error'),
                     processing_time_ms=int(processing_time)
                 )
 
                 # Process results
-                if extraction.get('has_food_event'):
-                    events = extraction['events']
-                    print(f"    ✅ Found {len(events)} event(s)")
+                # Check if extraction is valid and has events
+                if extraction and extraction.get('has_food_event'):
+                    events = extraction.get('events', [])
+                    if not events:
+                        print(f"    ℹ️  No food events extracted")
+                    else:
+                        print(f"    ✅ Found {len(events)} event(s)")
 
-                    for event in events:
-                        if event['confidence'] >= self.min_confidence:
-                            results['events_found'] += 1
+                        for event in events:
+                            if event.get('confidence', 0) >= self.min_confidence:
+                                results['events_found'] += 1
 
-                            # Create calendar event if client provided
-                            if calendar_client and event['date'] != 'unknown':
-                                try:
-                                    # Check duplicate
-                                    if calendar_client.check_duplicate(event['event_name'], event['date']):
-                                        print(f"       ⏭️  Duplicate: {event['event_name']}")
-                                        continue
+                                # Create calendar event if client provided
+                                if calendar_client and event.get('date') != 'unknown':
+                                    try:
+                                        # Check duplicate
+                                        if calendar_client.check_duplicate(event.get('event_name', ''), event.get('date', '')):
+                                            print(f"       ⏭️  Duplicate: {event.get('event_name', 'Unknown')}")
+                                            continue
 
-                                    # Create event
-                                    cal_event = calendar_client.create_event(
-                                        event_name=event['event_name'],
-                                        date=event['date'],
-                                        time=event['time'],
-                                        end_time=event.get('end_time', 'unknown'),
-                                        location=event.get('location', 'TBD'),
-                                        food_type=event.get('food_type', 'food'),
-                                        description=f"🍕 Free Food!\n\nFood: {event['food_type']}\nConfidence: {event['confidence']:.0%}\n\nExtracted by Cohere AI"
-                                    )
+                                        # Create event
+                                        cal_event = calendar_client.create_event(
+                                            event_name=event.get('event_name', 'Food Event'),
+                                            date=event.get('date', 'unknown'),
+                                            time=event.get('time', '12:00'),
+                                            end_time=event.get('end_time', 'unknown'),
+                                            location=event.get('location', 'TBD'),
+                                            food_type=event.get('food_type', 'food'),
+                                            description=f"🍕 Free Food!\n\nFood: {event.get('food_type', 'food')}\nConfidence: {event.get('confidence', 0):.0%}\n\nExtracted by Cohere AI"
+                                        )
 
-                                    # Save to database
+                                        # Save to database
+                                        self.db.save_found_event(
+                                            email_id=email['id'],
+                                            event_data=event,
+                                            calendar_id=cal_event.get('event_id'),
+                                            calendar_link=cal_event.get('html_link')
+                                        )
+
+                                        results['events_added'] += 1
+                                        print(f"       ✅ Added to calendar: {event.get('event_name', 'Food Event')}")
+
+                                    except Exception as e:
+                                        print(f"       ❌ Calendar error: {e}")
+                                        results['errors'].append({
+                                            'email_id': email['id'],
+                                            'event': event.get('event_name', 'Unknown'),
+                                            'error': str(e)
+                                        })
+                                else:
+                                    # No calendar client - just save event data
                                     self.db.save_found_event(
                                         email_id=email['id'],
                                         event_data=event,
-                                        calendar_id=cal_event['event_id'],
-                                        calendar_link=cal_event['html_link']
+                                        calendar_id=None,
+                                        calendar_link=None
                                     )
-
-                                    results['events_added'] += 1
-                                    print(f"       ✅ Added to calendar: {event['event_name']}")
-
-                                except Exception as e:
-                                    print(f"       ❌ Calendar error: {e}")
-                                    results['errors'].append({
-                                        'email_id': email['id'],
-                                        'event': event['event_name'],
-                                        'error': str(e)
-                                    })
+                                    print(f"       💾 Saved event (no calendar): {event.get('event_name', 'Unknown')}")
                             else:
-                                # No calendar client - just save event data
-                                self.db.save_found_event(
-                                    email_id=email['id'],
-                                    event_data=event,
-                                    calendar_id=None,
-                                    calendar_link=None
-                                )
-                                print(f"       💾 Saved event (no calendar): {event['event_name']}")
-                        else:
-                            print(f"       ⚠️  Low confidence ({event['confidence']:.2f}): {event['event_name']}")
+                                print(f"       ⚠️  Low confidence ({event.get('confidence', 0):.2f}): {event.get('event_name', 'Unknown')}")
                 else:
                     print(f"    ℹ️  No food events extracted")
 
                 # Save processed email
+                events_count = len(extraction.get('events', [])) if extraction else 0
                 self.db.save_processed_email(
                     email['id'], email['subject'], email['sender'],
                     analysis_data={
                         'filter_tier': 'passed_all',
-                        'cohere_extraction': extraction,
-                        'events_found': len(extraction.get('events', []))
+                        'cohere_extraction': extraction if extraction else {},
+                        'events_found': events_count
                     }
                 )
 

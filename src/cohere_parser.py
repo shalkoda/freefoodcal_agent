@@ -35,7 +35,8 @@ class CohereEventExtractor:
             raise ValueError("COHERE_API_KEY not found in environment variables")
 
         self.client = cohere.Client(api_key)
-        self.model = os.getenv('COHERE_MODEL', 'command-r-plus')
+        # Updated to use command-r (command-r-plus was deprecated Sept 2025)
+        self.model = os.getenv('COHERE_MODEL', 'command-r')
         self.temperature = float(os.getenv('COHERE_TEMPERATURE', 0.3))
         self.max_tokens = int(os.getenv('COHERE_MAX_TOKENS', 1500))
 
