@@ -62,7 +62,9 @@ def has_food_keywords(email_content):
         'food', 'catering', 'snacks', 'bagels',
         'donuts', 'coffee', 'sandwiches', 'tacos',
         'bbq', 'potluck', 'refreshments', 'meal',
-        'buffet', 'free food', 'provided', 'served'
+        'buffet', 'free food', 'provided', 'served',
+        'social',  # "Coffee Social", "CS CARES Coffee Social" - social events often have food
+        'drinks', 'beverages'  # "Opening Ceremony with drinks and snacks" - drinks are consumables
     ]
 
     content_lower = email_content.lower()
@@ -189,7 +191,7 @@ def calculate_initial_score(email_content, sender=""):
     return max(0.0, min(1.0, score))  # Clamp to 0-1
 
 
-def should_process_with_llm(email_content, sender=""):
+def should_process_with_llm(email_content, sender="", email_subject=""):
     """
     Determine if email is worth processing with LLM (Tier 2/3)
 
@@ -198,6 +200,7 @@ def should_process_with_llm(email_content, sender=""):
     Args:
         email_content: Email body text
         sender: Sender email address
+        email_subject: Email subject line (checked for food keywords)
 
     Returns:
         (should_process: bool, reason: str, score: float)
@@ -207,13 +210,22 @@ def should_process_with_llm(email_content, sender=""):
     if is_spam:
         return False, spam_reason, 0.0
 
-    # Must have food keywords
-    has_food, food_kw = has_food_keywords(email_content)
+    # Check for food keywords in BOTH content AND subject (critical for "Coffee Social" emails)
+    # Many emails only mention food in the subject (e.g., "CS CARES Coffee Social")
+    has_food_content, food_kw_content = has_food_keywords(email_content)
+    has_food_subject, food_kw_subject = has_food_keywords(email_subject or "")
+    
+    # Combine results - if food keywords found in either content or subject, pass
+    has_food = has_food_content or has_food_subject
+    food_kw = list(set(food_kw_content + food_kw_subject))  # Combine unique keywords
+    
     if not has_food:
-        return False, "No food keywords found", 0.1
+        return False, "No food keywords found in content or subject", 0.1
 
-    # Calculate overall score
-    score = calculate_initial_score(email_content, sender)
+    # Calculate overall score (include subject in calculation)
+    # Combine content and subject for score calculation
+    combined_text = f"{email_subject or ''} {email_content}".strip()
+    score = calculate_initial_score(combined_text, sender)
 
     # Threshold for LLM processing
     if score >= 0.3:

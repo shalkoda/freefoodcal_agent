@@ -27,29 +27,36 @@ class GeminiSemanticFilter:
         model_name = os.getenv('GEMINI_MODEL', 'gemini-1.5-flash')
         self.model = genai.GenerativeModel(model_name)
 
-    def is_genuine_event(self, email_content, sender_email=""):
+    def is_genuine_event(self, email_content, sender_email="", email_subject=""):
         """
         Quick check: Is this worth sending to Cohere?
 
         Args:
             email_content: Email body text
             sender_email: Sender's email address
+            email_subject: Email subject line (important for event detection)
 
         Returns:
             bool: True if likely a genuine event, False if spam/marketing
         """
 
+        # Include subject in prompt - critical for "Coffee Social" detection
+        subject_section = f"Subject: {email_subject}\n\n" if email_subject else ""
+        
         prompt = f"""Is this email a genuine invitation to an internal event with food? Answer YES or NO only.
 
 Sender: {sender_email}
-Email: {email_content[:800]}
+{subject_section}Email: {email_content[:800]}
 
 Genuine event indicators:
 - Internal sender (@company domain, @edu, @gov)
 - Specific date/time/location
-- Food explicitly mentioned
+- Food explicitly mentioned (coffee, lunch, pizza, snacks, refreshments)
+- Event title in subject (e.g., "Coffee Social", "CS CARES Coffee Social")
 - RSVP or action requested
 - Casual/team language
+
+CRITICAL: If the subject contains "Coffee Social" or "Coffee Hour", this is ALWAYS a genuine event.
 
 Spam indicators:
 - External sender

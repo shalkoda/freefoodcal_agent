@@ -103,11 +103,17 @@ class FoodEventAgent:
 
                 # Skip if already processed, but allow re-processing if needed
                 if self.db.is_email_processed(email['id']):
-                    # Allow re-processing emails that were filtered at Tier 2 (Gemini)
-                    # since Gemini was bypassing incorrectly before
-                    # This helps when we fix the filtering logic
+                    # Allow re-processing emails that might have been incorrectly filtered
+                    # Re-process coffee, social, and other food-related emails that may have been missed
                     subject = email.get('subject', '') or ''
-                    if any(keyword in subject.lower() for keyword in ['coffee', 'social', 'pizza', 'lunch', 'food']):
+                    content_preview = email.get('bodyPreview', '') or ''
+                    combined_text = f"{subject} {content_preview}".lower()
+                    
+                    # Re-process if subject or preview contains food keywords
+                    if any(keyword in combined_text for keyword in ['coffee', 'social', 'cares', 'drinks', 'snacks', 'refreshments', 'beverages']):
+                        print(f"    🔄 Re-processing coffee/food email that might have been incorrectly filtered...")
+                        # Continue processing - clear old record will happen in save_processed_email
+                    elif any(keyword in combined_text for keyword in ['pizza', 'lunch', 'food']):
                         print(f"    🔄 Re-processing email that might have been incorrectly filtered...")
                         # Continue processing - clear old record will happen in save_processed_email
                     else:
@@ -124,8 +130,10 @@ class FoodEventAgent:
                 # ========================================
                 # TIER 1: HEURISTIC FILTER (Free, instant)
                 # ========================================
+                # Pass email subject to filter - critical for "Coffee Social" detection
+                # Many emails only mention food in the subject (e.g., "CS CARES Coffee Social")
                 should_process, tier1_reason, tier1_score = should_process_with_llm(
-                    content, email['sender']
+                    content, email['sender'], email_subject=subject
                 )
 
                 if not should_process:
@@ -149,7 +157,8 @@ class FoodEventAgent:
                 # TIER 2: GEMINI FILTER (Free, semantic)
                 # ========================================
                 print(f"    🟢 Tier 2: Gemini semantic check...")
-                is_genuine = self.gemini_filter.is_genuine_event(content, email['sender'])
+                # Pass email subject to Gemini filter - critical for "Coffee Social" detection
+                is_genuine = self.gemini_filter.is_genuine_event(content, email['sender'], email_subject=subject)
                 results['gemini_calls'] += 1
 
                 if not is_genuine:
