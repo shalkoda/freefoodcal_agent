@@ -66,7 +66,13 @@ Answer (YES/NO):"""
             return 'yes' in answer
         except Exception as e:
             print(f"  ⚠️  Gemini API error: {e}")
-            return True  # Default to processing if filter fails
+            # If API key is invalid or there's a serious error, don't pass emails through
+            # Return False to avoid wasting Cohere API calls
+            if 'API key' in str(e) or 'API_KEY' in str(e):
+                print(f"  ❌ Gemini API key invalid - filtering out email to save Cohere budget")
+                return False
+            # For other errors, default to True (process) to avoid false negatives
+            return True
 
     def classify_sender(self, sender_email):
         """

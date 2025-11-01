@@ -12,7 +12,9 @@ from msal import ConfidentialClientApplication, SerializableTokenCache
 
 
 # ---- OAuth / Graph settings ----
-SCOPES = ["User.Read", "Mail.Read", "offline_access", "openid", "profile"]
+# Note: offline_access, openid, and profile are automatically included by MSAL
+# and should NOT be explicitly requested as they are reserved scopes
+SCOPES = ["User.Read", "Mail.Read"]
 CACHE_PATH = os.getenv("MS_MICROSOFT_CACHE", "microsoft_token_cache.bin")
 GRAPH_ROOT = "https://graph.microsoft.com/v1.0"
 
@@ -121,7 +123,7 @@ class OutlookClient:
     def search_emails(self, query: str, max_results: int = 50) -> List[Dict]:
         """
         Search emails with a full-text query across subject/body.
-        Uses Graph $search POST endpoint (requires ConsistencyLevel: eventual).
+        Uses Graph $search query parameter with GET (requires ConsistencyLevel: eventual).
 
         Args:
             query: e.g. 'food OR pizza OR lunch'
@@ -143,71 +145,48 @@ class OutlookClient:
             "ConsistencyLevel": "eventual",  # REQUIRED for $search
         }
 
-        # Use POST endpoint for search with request body
-        url = f"{GRAPH_ROOT}/me/messages/$search"
+        # Use GET endpoint with $search query parameter
+        # Note: $search requires ConsistencyLevel: eventual header
+        url = f"{GRAPH_ROOT}/me/messages"
         
-        # Request body for search
-        search_body = {
-            "requests": [
-                {
-                    "entityTypes": ["message"],
-                    "query": {
-                        "queryString": query
-                    },
-                    "from": 0,
-                    "size": max_results
-                }
-            ]
+        # Remove quotes from query - Microsoft Graph API handles this
+        # The query should be passed as-is without extra quotes
+        params = {
+            "$search": query,  # No quotes around query
+            "$select": "id,subject,from,receivedDateTime,bodyPreview",
+            "$top": max_results,
+            "$orderby": "receivedDateTime DESC",
         }
 
         try:
-            resp = requests.post(url, headers=headers, json=search_body, timeout=20)
+            resp = requests.get(url, headers=headers, params=params, timeout=20)
             resp.raise_for_status()
             data = resp.json()
 
             emails: List[Dict] = []
-            
-            # Handle search response format
-            # The response may have a different structure depending on Graph API version
-            # Try to extract from value array first
-            if "value" in data:
-                items = data["value"]
-            elif isinstance(data, list):
-                items = data
-            else:
-                # Search API might return hits differently
-                items = data.get("hits", {}).get("hits", [])
-                # Extract _source if it's Elasticsearch-like format
-                if items and "_source" in items[0]:
-                    items = [hit.get("_source", {}) for hit in items]
-
-            for item in items:
-                # Handle different response formats
-                email_data = item.get("_source", item) if "_source" in item else item
-                
+            for item in data.get("value", []):
                 emails.append({
-                    "id": email_data.get("id", ""),
-                    "subject": email_data.get("subject", ""),
-                    "sender": email_data.get("from", {}).get("emailAddress", {}).get("address", "") if isinstance(email_data.get("from"), dict) else "",
-                    "sender_name": email_data.get("from", {}).get("emailAddress", {}).get("name", "") if isinstance(email_data.get("from"), dict) else "",
-                    "received_at": email_data.get("receivedDateTime", ""),
-                    "preview": email_data.get("bodyPreview", ""),
+                    "id": item["id"],
+                    "subject": item.get("subject", ""),
+                    "sender": item.get("from", {}).get("emailAddress", {}).get("address", ""),
+                    "sender_name": item.get("from", {}).get("emailAddress", {}).get("name", ""),
+                    "received_at": item.get("receivedDateTime", ""),
+                    "preview": item.get("bodyPreview", ""),
                 })
-            
-            # If search POST doesn't work, fallback to $filter with GET
-            if not emails:
-                return self._search_emails_fallback(query, max_results, token)
-
             return emails
 
         except requests.exceptions.HTTPError as e:
-            # If POST search fails, try fallback method
-            if e.response.status_code in [400, 404, 405]:
-                print(f"⚠️  Search POST endpoint not available, trying fallback method...")
+            # If $search doesn't work (might not be available in all tenants), try fallback
+            if e.response.status_code in [400, 404, 501]:
+                print(f"⚠️  $search parameter not available, trying fallback method...")
                 return self._search_emails_fallback(query, max_results, token)
             print(f"❌ Error searching emails: {e}")
             if e.response.status_code == 401:
                 print(f"   Authentication expired. Please re-authenticate.")
+            elif e.response.status_code == 400:
+                # Try fallback for bad request
+                print(f"⚠️  Search query format issue, trying fallback method...")
+                return self._search_emails_fallback(query, max_results, token)
             return []
         except requests.exceptions.RequestException as e:
             print(f"❌ Error searching emails: {e}")
@@ -288,7 +267,12 @@ class OutlookClient:
         """
         Get full email content for a message id, stripping HTML into text.
         """
-        token = self.get_access_token()
+        try:
+            token = self.get_access_token()
+        except Exception as e:
+            print(f"❌ Authentication error getting email content: {e}")
+            return None
+
         headers = {
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json",
@@ -307,18 +291,33 @@ class OutlookClient:
                 return self._strip_html(content)
             return content
 
+        except requests.exceptions.HTTPError as e:
+            print(f"❌ Error getting email content: {e}")
+            if e.response.status_code == 401:
+                print(f"   Authentication expired. Please re-authenticate.")
+            return None
         except requests.exceptions.RequestException as e:
             print(f"❌ Error getting email content: {e}")
             return None
 
     def get_user_info(self) -> Optional[Dict]:
         """Fetch the current user's profile."""
-        token = self.get_access_token()
+        try:
+            token = self.get_access_token()
+        except Exception as e:
+            print(f"❌ Authentication error getting user info: {e}")
+            return None
+
         headers = {"Authorization": f"Bearer {token}"}
         try:
             resp = requests.get(f"{GRAPH_ROOT}/me", headers=headers, timeout=15)
             resp.raise_for_status()
             return resp.json()
+        except requests.exceptions.HTTPError as e:
+            print(f"❌ Error getting user info: {e}")
+            if e.response.status_code == 401:
+                print(f"   Authentication expired. Please re-authenticate.")
+            return None
         except requests.exceptions.RequestException as e:
             print(f"❌ Error getting user info: {e}")
             return None
