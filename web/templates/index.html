@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-box">
+        <div class="number">{{ stats.total_emails_processed }}</div>
+        <div class="label">Emails Processed</div>
+    </div>
+    <div class="stat-box">
+        <div class="number">{{ stats.total_events_found }}</div>
+        <div class="label">Events Found</div>
+    </div>
+    <div class="stat-box">
+        <div class="number">{{ stats.events_in_calendar }}</div>
+        <div class="label">In Calendar</div>
+    </div>
+    <div class="stat-box">
+        <div class="number">{{ stats.cohere_calls_today }}</div>
+        <div class="label">Cohere Calls Today</div>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Actions</h2>
+    <button class="btn" onclick="triggerScan()">🔍 Scan Emails Now</button>
+    <a href="/analytics" class="btn btn-secondary">📊 View Analytics</a>
+    <div id="scan-status" style="margin-top: 15px;"></div>
+</div>
+
+<div class="card">
+    <h2>Recent Events</h2>
+    {% if recent_events %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Event</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Location</th>
+                    <th>Food Type</th>
+                    <th>Confidence</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in recent_events %}
+                <tr>
+                    <td>{{ event.event_name }}</td>
+                    <td>{{ event.event_date }}</td>
+                    <td>{{ event.event_time }}</td>
+                    <td>{{ event.location }}</td>
+                    <td><span class="badge badge-info">{{ event.food_type }}</span></td>
+                    <td><span class="badge badge-success">{{ (event.cohere_confidence * 100)|int }}%</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No events found yet. Click "Scan Emails Now" to start!</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>Food Type Distribution</h2>
+    {% if food_stats %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Food Type</th>
+                    <th>Count</th>
+                    <th>Avg Confidence</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stat in food_stats %}
+                <tr>
+                    <td>{{ stat.food_type }}</td>
+                    <td>{{ stat.count }}</td>
+                    <td>{{ (stat.avg_confidence * 100)|int }}%</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function triggerScan() {
+    const statusDiv = document.getElementById('scan-status');
+    statusDiv.innerHTML = '<p style="color: #667eea;">🔄 Scanning emails... This may take a minute.</p>';
+
+    fetch('/scan', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const results = data.results;
+                statusDiv.innerHTML = `
+                    <p style="color: green;">✅ Scan complete!</p>
+                    <p>Emails scanned: ${results.emails_scanned}</p>
+                    <p>Events found: ${results.events_found}</p>
+                    <p>Events added: ${results.events_added}</p>
+                    <p>Cohere calls: ${results.cohere_calls}</p>
+                `;
+                // Reload page after 2 seconds
+                setTimeout(() => location.reload(), 2000);
+            } else {
+                statusDiv.innerHTML = `<p style="color: red;">❌ Error: ${data.error}</p>`;
+            }
+        })
+        .catch(error => {
+            statusDiv.innerHTML = `<p style="color: red;">❌ Error: ${error}</p>`;
+        });
+}
+</script>
+{% endblock %}
