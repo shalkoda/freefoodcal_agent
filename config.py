@@ -15,7 +15,7 @@ class Config:
 
     # LLM APIs
     COHERE_API_KEY = os.getenv('COHERE_API_KEY')
-    COHERE_MODEL = os.getenv('COHERE_MODEL', 'command-r-plus')
+    COHERE_MODEL = os.getenv('COHERE_MODEL', 'command-r7b-12-2024')
     COHERE_TEMPERATURE = float(os.getenv('COHERE_TEMPERATURE', 0.3))
     COHERE_MAX_TOKENS = int(os.getenv('COHERE_MAX_TOKENS', 1500))
 

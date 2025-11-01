@@ -35,8 +35,8 @@ class CohereEventExtractor:
             raise ValueError("COHERE_API_KEY not found in environment variables")
 
         self.client = cohere.Client(api_key)
-        # Updated to use command-r (command-r-plus was deprecated Sept 2025)
-        self.model = os.getenv('COHERE_MODEL', 'command-r')
+        # Updated to use command-r7b-12-2024 (command-r and command-r-plus were deprecated Sept 2025)
+        self.model = os.getenv('COHERE_MODEL', 'command-r7b-12-2024')
         self.temperature = float(os.getenv('COHERE_TEMPERATURE', 0.3))
         self.max_tokens = int(os.getenv('COHERE_MAX_TOKENS', 1500))
 
@@ -101,7 +101,17 @@ class CohereEventExtractor:
             )
 
             # Parse response
-            result = self._parse_response(response.text)
+            if not response or not hasattr(response, 'text') or not response.text:
+                return self._empty_result(error="Empty response from Cohere API")
+            
+            # Log response for debugging (first 200 chars)
+            response_text = response.text.strip()
+            if len(response_text) > 200:
+                print(f"    📝 Cohere response preview: {response_text[:200]}...")
+            else:
+                print(f"    📝 Cohere response: {response_text}")
+            
+            result = self._parse_response(response_text)
 
             # Post-process events
             for event in result.get('events', []):
@@ -148,7 +158,7 @@ class CohereEventExtractor:
 
 CONTEXT:
 - Today is {today_str} ({day_name})
-- You're looking for events that mention FREE FOOD, catering, or meals provided
+- You're looking for events that mention FREE FOOD, catering, meals, refreshments, coffee, snacks, or any consumables provided
 
 EMAIL TO ANALYZE:
 ```
@@ -156,7 +166,13 @@ EMAIL TO ANALYZE:
 ```
 
 TASK:
-Extract ALL events where food is provided. Return ONLY valid JSON.
+Extract ALL events where food, drinks, coffee, snacks, refreshments, or catering is provided. Return ONLY valid JSON.
+
+IMPORTANT: 
+- "Coffee Social", "Coffee Hour", "Coffee & Donuts" = FOOD EVENT (coffee provided)
+- "Lunch Meeting", "Pizza Party" = FOOD EVENT
+- Any event with "social" + food/drinks = FOOD EVENT
+- Refreshments, snacks, beverages = FOOD EVENT
 
 OUTPUT FORMAT:
 {{
@@ -192,7 +208,10 @@ EXTRACTION RULES:
    - If end_time not mentioned, add 1 hour to start
 
 3. FOOD TYPE CLASSIFICATION:
-   - Extract specific: pizza, tacos, sandwiches, breakfast, lunch, dinner, snacks, coffee, donuts, bbq
+   - Extract specific: pizza, tacos, sandwiches, breakfast, lunch, dinner, snacks, coffee, donuts, bbq, refreshments, beverages
+   - "Coffee Social" → food_type: "coffee"
+   - "Coffee & Donuts" → food_type: "coffee"
+   - Any social event with refreshments → food_type: "refreshments" or "snacks"
    - Generic fallback: "catering" or "food"
 
 4. CONFIDENCE SCORING:
@@ -212,10 +231,15 @@ EXTRACTION RULES:
 7. For missing info, use "unknown" (not null or empty string)
 
 8. ONLY extract events with food. Ignore:
-   - Events without food mention
+   - Events without food/drinks/refreshments mention
    - "Bring your own lunch" (no free food)
    - Past events
    - Cancelled events
+   
+9. INCLUDE these as food events:
+   - Coffee Social / Coffee Hour (coffee provided)
+   - Any "Social" event with refreshments mentioned
+   - Events with "coffee", "snacks", "refreshments", "beverages" in the title or description
 
 Return ONLY the JSON object, no markdown formatting or extra text."""
 
@@ -229,29 +253,66 @@ Return ONLY the JSON object, no markdown formatting or extra text."""
         - Direct JSON
         - JSON in markdown code blocks
         - JSON with extra text
+        - Malformed JSON recovery
         """
-
+        
+        # Clean the response text
+        response_text = response_text.strip()
+        
+        # Remove any leading/trailing text that's not JSON
+        # Try direct JSON parse first
         try:
-            # Try direct JSON parse first
-            return json.loads(response_text)
-        except json.JSONDecodeError:
-            # Try extracting from markdown code blocks
-            match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', response_text, re.DOTALL)
-            if match:
-                try:
-                    return json.loads(match.group(1))
-                except json.JSONDecodeError:
-                    pass
+            result = json.loads(response_text)
+            print(f"    ✅ JSON parsed successfully (direct)")
+            return result
+        except json.JSONDecodeError as e:
+            print(f"    ⚠️  Direct JSON parse failed, trying alternatives...")
 
-            # Try finding any JSON object in the text
-            match = re.search(r'\{.*\}', response_text, re.DOTALL)
-            if match:
-                try:
-                    return json.loads(match.group(0))
-                except json.JSONDecodeError:
-                    pass
+        # Try extracting from markdown code blocks
+        match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', response_text, re.DOTALL)
+        if match:
+            try:
+                return json.loads(match.group(1))
+            except json.JSONDecodeError:
+                pass
 
-            return self._empty_result(error="Could not parse JSON from response")
+        # Try finding any JSON object in the text (improved regex)
+        # Match from first { to last }
+        match = re.search(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', response_text, re.DOTALL)
+        if match:
+            try:
+                return json.loads(match.group(0))
+            except json.JSONDecodeError:
+                pass
+        
+        # Try more aggressive extraction - find largest JSON-like structure
+        try:
+            # Find all potential JSON objects
+            json_pattern = r'\{(?:[^{}]|\{[^{}]*\})*\}'
+            matches = re.findall(json_pattern, response_text, re.DOTALL)
+            for match_text in reversed(matches):  # Try largest first
+                try:
+                    result = json.loads(match_text)
+                    if 'has_food_event' in result or 'events' in result:
+                        return result
+                except json.JSONDecodeError:
+                    continue
+        except:
+            pass
+
+        # Last resort: try to extract and repair common issues
+        try:
+            # Remove common non-JSON prefixes/suffixes
+            cleaned = re.sub(r'^[^{]*', '', response_text)
+            cleaned = re.sub(r'[^}]*$', '', cleaned)
+            if cleaned:
+                return json.loads(cleaned)
+        except:
+            pass
+
+        # Log the problematic response for debugging
+        print(f"⚠️  Could not parse Cohere response. First 500 chars: {response_text[:500]}")
+        return self._empty_result(error=f"Could not parse JSON from response. Response length: {len(response_text)}")
 
     def _normalize_event(self, event, reference_date):
         """

@@ -66,11 +66,13 @@ Answer (YES/NO):"""
             return 'yes' in answer
         except Exception as e:
             print(f"  ⚠️  Gemini API error: {e}")
-            # If API key is invalid or there's a serious error, don't pass emails through
-            # Return False to avoid wasting Cohere API calls
-            if 'API key' in str(e) or 'API_KEY' in str(e):
-                print(f"  ❌ Gemini API key invalid - filtering out email to save Cohere budget")
-                return False
+            # If API key is invalid, allow emails through to Cohere (bypass filter)
+            # This allows testing when Gemini isn't configured
+            if 'API key' in str(e) or 'API_KEY' in str(e) or 'API_KEY_INVALID' in str(e):
+                print(f"  ⚠️  Gemini API key invalid - bypassing filter (allowing to Cohere)")
+                # Return True to allow emails through when Gemini isn't available
+                # This prevents blocking all emails when Gemini API key isn't set
+                return True
             # For other errors, default to True (process) to avoid false negatives
             return True
 
