@@ -287,7 +287,7 @@ After running for 1 month, you'll have:
 - Processing time metrics
 - Cost savings from smart filtering
 
-### ✅ Internship Application Talking Points
+### ✅ Talking Points
 
 **"Why Cohere?"**
 > "I chose Cohere's command-r7b-12-2024 specifically for its superior structured extraction capabilities. The challenge was converting ambiguous natural language ('next Tuesday at 2pm') and extracting exact event names from email subjects ('WIE Coffee Chat' not 'Fireside chat with...'). Cohere's consistency and JSON output made it ideal."
