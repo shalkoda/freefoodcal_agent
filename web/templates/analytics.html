@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics - Free Food Calendar{% endblock %}
+{% block subtitle %}LLM Usage & Performance Metrics{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>🤖 LLM Usage (Last 30 Days)</h2>
+    {% if llm_stats %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Provider</th>
+                    <th>Total Calls</th>
+                    <th>Successful</th>
+                    <th>Success Rate</th>
+                    <th>Avg Processing Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stat in llm_stats %}
+                <tr>
+                    <td>
+                        {% if stat.provider == 'cohere' %}
+                            🔵 Cohere
+                        {% else %}
+                            🟢 Gemini
+                        {% endif %}
+                    </td>
+                    <td>{{ stat.total_calls }}</td>
+                    <td>{{ stat.successful_calls }}</td>
+                    <td><span class="badge badge-success">{{ stat.success_rate|round(1) }}%</span></td>
+                    <td>{{ stat.avg_processing_time|round(0) }}ms</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No LLM usage data yet.</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>🎯 Filter Performance</h2>
+    {% if filter_perf %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Scanned</th>
+                    <th>Passed T1</th>
+                    <th>Passed T2</th>
+                    <th>Cohere Calls</th>
+                    <th>Events Found</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for perf in filter_perf %}
+                <tr>
+                    <td>{{ perf.scan_date }}</td>
+                    <td>{{ perf.total_scanned }}</td>
+                    <td>{{ perf.total_passed_t1 }}</td>
+                    <td>{{ perf.total_passed_t2 }}</td>
+                    <td><span class="badge badge-info">{{ perf.total_cohere_calls }}</span></td>
+                    <td><span class="badge badge-success">{{ perf.total_events }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No filter performance data yet.</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>🍕 Food Type Distribution</h2>
+    {% if food_stats %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Food Type</th>
+                    <th>Count</th>
+                    <th>Avg Confidence</th>
+                    <th>Last Seen</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stat in food_stats %}
+                <tr>
+                    <td>{{ stat.food_type }}</td>
+                    <td>{{ stat.count }}</td>
+                    <td>{{ (stat.avg_confidence * 100)|round(1) }}%</td>
+                    <td>{{ stat.last_seen[:10] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+</div>
+
+<div style="margin-top: 20px;">
+    <a href="/" class="btn">← Back to Dashboard</a>
+</div>
+{% endblock %}
