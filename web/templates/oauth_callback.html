@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}OAuth Callback{% endblock %}
+
+{% block content %}
+<div class="card" style="text-align: center; padding: 40px;">
+    {% if success %}
+        <h1 style="color: green; font-size: 3em;">✅</h1>
+        <h2>Successfully connected to {{ service }}!</h2>
+        <p style="margin: 20px 0;">You can now close this window and return to the application.</p>
+        <a href="/" class="btn">Return to Dashboard</a>
+    {% else %}
+        <h1 style="color: red; font-size: 3em;">❌</h1>
+        <h2>Failed to connect to {{ service }}</h2>
+        <p style="margin: 20px 0; color: #666;">{{ error }}</p>
+        <a href="/" class="btn">Return to Dashboard</a>
+    {% endif %}
+</div>
+
+<script>
+    // Auto-redirect after 5 seconds
+    setTimeout(() => {
+        window.location.href = '/';
+    }, 5000);
+</script>
+{% endblock %}
