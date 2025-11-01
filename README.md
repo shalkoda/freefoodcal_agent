@@ -349,11 +349,7 @@ Pull requests welcome! Please:
 
 ## 📧 Contact
 
-Built for the Cohere internship application by [Your Name]
-
-**Portfolio**: [your-portfolio.com]
-**LinkedIn**: [linkedin.com/in/yourprofile]
-**Email**: [your.email@example.com]
+**Email**: [shalk2@illinois.edu]
 
 ---
 
