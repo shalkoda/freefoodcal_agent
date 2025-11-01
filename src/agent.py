@@ -85,8 +85,8 @@ class FoodEventAgent:
         try:
             # Fetch emails
             search_query = os.getenv('EMAIL_SEARCH_QUERY',
-                'food OR pizza OR lunch OR breakfast')
-            max_emails = int(os.getenv('MAX_EMAILS_PER_SCAN', 50))
+                'food OR pizza OR lunch OR breakfast OR dinner OR snacks OR catering OR coffee OR social OR refreshments')
+            max_emails = int(os.getenv('MAX_EMAILS_PER_SCAN', 100))
 
             print(f"\n🔍 Searching emails with query: {search_query}")
             emails = self.outlook.search_emails(search_query, max_results=max_emails)

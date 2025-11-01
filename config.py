@@ -32,9 +32,9 @@ class Config:
     GOOGLE_REDIRECT_URI = os.getenv('GOOGLE_REDIRECT_URI', 'http://localhost:5050/auth/google/callback')
 
     # Scanning Configuration
-    EMAIL_SEARCH_QUERY = os.getenv('EMAIL_SEARCH_QUERY', 'food OR pizza OR lunch OR breakfast OR dinner OR snacks OR catering')
+    EMAIL_SEARCH_QUERY = os.getenv('EMAIL_SEARCH_QUERY', 'food OR pizza OR lunch OR breakfast OR dinner OR snacks OR catering OR coffee OR social OR refreshments')
     SCAN_INTERVAL_HOURS = int(os.getenv('SCAN_INTERVAL_HOURS', 6))
-    MAX_EMAILS_PER_SCAN = int(os.getenv('MAX_EMAILS_PER_SCAN', 50))
+    MAX_EMAILS_PER_SCAN = int(os.getenv('MAX_EMAILS_PER_SCAN', 100))  # Increased from 50 to capture more emails
 
     # Filtering Configuration
     COHERE_DAILY_BUDGET = int(os.getenv('COHERE_DAILY_BUDGET', 15))
