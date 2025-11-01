@@ -208,8 +208,8 @@ class CohereEventExtractor:
         subject_instructions = ""
         if email_subject:
             subject_section = f"\nEMAIL SUBJECT: {email_subject}\n\n"
-            subject_instructions = "\n⚠️  CRITICAL: Check the EMAIL SUBJECT above - it often contains the event name (e.g., 'CS CARES Coffee Social', 'Coffee Social', 'Pizza Party'). If the subject contains 'Coffee Social' or 'Coffee Hour', it is ALWAYS a food event with coffee provided.\n"
-            # Note: Subject often contains critical info like "Coffee Social", "Pizza Party", etc.
+            subject_instructions = "\n⚠️  CRITICAL: Check the EMAIL SUBJECT above - it often contains the event name (e.g., 'CS CARES Coffee Social', 'WIE Coffee Chat', 'Coffee Social', 'Pizza Party', 'Halloween Party').\n\n🎯 EVENT NAME EXTRACTION RULES:\n- If the subject contains an event name like 'WIE Coffee Chat', 'CS CARES Coffee Social', 'Coffee Social', use that EXACT name as event_name\n- If the subject contains 'Coffee Chat' or 'Coffee Social', extract that as the event name (e.g., 'WIE Coffee Chat')\n- If the subject contains a party name like 'Halloween Party', use that as the event name\n- If the subject contains a food event name, prioritize it over other text in the body\n- If the subject contains 'Coffee' + 'Chat' or 'Coffee' + 'Social', combine them as the event name\n\nIf the subject contains 'Coffee Social' or 'Coffee Hour' or 'Coffee Chat', it is ALWAYS a food event with coffee provided.\n"
+            # Note: Subject often contains critical info like "Coffee Social", "Coffee Chat", "Pizza Party", etc.
 
         prompt = f"""You are an AI assistant specialized in extracting event information from emails.
 
@@ -227,38 +227,47 @@ Extract ALL events where food, drinks, coffee, snacks, refreshments, or catering
 
 CRITICAL RULES - These are ALWAYS food events:
 - "Coffee Social" = FOOD EVENT (coffee is provided at social events)
-- "CS CARES Coffee Social" = FOOD EVENT (coffee provided)
+- "CS CARES Coffee Social" = FOOD EVENT (coffee provided - use this EXACT name from subject)
 - "Coffee Hour" = FOOD EVENT (coffee provided)
 - "Coffee & Donuts" = FOOD EVENT (coffee and donuts provided)
 - Any event with "Coffee" in the title = FOOD EVENT (coffee is a consumable)
 - Any event with "Social" in the title that mentions coffee/food = FOOD EVENT
 - "Lunch Meeting" = FOOD EVENT (lunch provided)
 - "Pizza Party" = FOOD EVENT (pizza provided)
+- "Party" with treats = FOOD EVENT
 - Any event with explicit time/location + food/drinks = FOOD EVENT
 - Refreshments, snacks, beverages = FOOD EVENT
 
 EXAMPLES OF FOOD EVENTS:
-- "CS CARES Coffee Social" at 4pm = coffee provided
+- "WIE Coffee Chat" at 3pm = coffee/food provided (use "WIE Coffee Chat" as event_name, NOT other text from body)
+- "CS CARES Coffee Social" at 4pm = coffee provided (use "CS CARES Coffee Social" as event_name)
 - "Coffee Social" = coffee provided
 - "Team Lunch" = lunch provided
 - "Pizza Party" = pizza provided
+- "Halloween Party" with treats = food provided
 
 OUTPUT FORMAT:
 {{
   "has_food_event": true,
   "events": [
     {{
-      "event_name": "CS CARES Coffee Social",
-      "date": "2025-10-30",
-      "time": "16:00",
-      "end_time": "17:30",
-      "location": "4401 Siebel Center",
+      "event_name": "WIE Coffee Chat",
+      "date": "2025-11-07",
+      "time": "15:00",
+      "end_time": "16:30",
+      "location": "210 Engineering Hall",
       "food_type": "coffee",
       "confidence": 0.95,
-      "reasoning": "Title explicitly states 'Coffee Social' which means coffee is provided"
+      "reasoning": "Subject contains 'WIE Coffee Chat' - extract this exact event name. Coffee and food provided."
     }}
   ]
 }}
+
+CRITICAL: When extracting event_name:
+- If subject contains event name like "WIE Coffee Chat", "CS CARES Coffee Social", use that EXACT name
+- If subject has "Coffee Chat" or "Coffee Social", extract the full event name from subject (e.g., "WIE Coffee Chat" not just "Coffee Chat")
+- If subject has "Halloween Party" or "Pizza Party", use that as event_name
+- Prioritize subject line event names over generic descriptions in the body
 
 EXAMPLE FOR COFFEE SOCIAL:
 If email title contains "Coffee Social" or "Coffee Hour":
@@ -311,14 +320,23 @@ EXTRACTION RULES:
    - Past events
    - Cancelled events
    
-9. INCLUDE these as food events (these are ALWAYS food events):
+9. EVENT NAME EXTRACTION (CRITICAL):
+   - If EMAIL SUBJECT contains an event name like "WIE Coffee Chat", "CS CARES Coffee Social", use that EXACT name
+   - DO NOT extract generic descriptions from body text if subject has a specific event name
+   - Example: Subject "The WIE Buzz 10-31-25" with content mentioning "WIE Coffee Chat" → event_name: "WIE Coffee Chat" (NOT "Fireside chat with..." or "The WIE Buzz")
+   - Example: Subject "Smile Halloween Party" → event_name: "Smile Halloween Party" (NOT generic party description)
+   - Always prioritize the subject line event name over body text descriptions
+   - Extract the FULL event name: "WIE Coffee Chat" not just "Coffee Chat"
+
+10. INCLUDE these as food events (these are ALWAYS food events):
+   - "WIE Coffee Chat" (coffee/food provided)
    - "Coffee Social" (coffee is ALWAYS provided at coffee socials)
    - "CS CARES Coffee Social" (coffee is provided)
    - "Coffee Hour" (coffee is provided)
    - Any event with "Coffee" in the title (coffee is a consumable)
    - Any "Social" event that mentions coffee/food/beverages
    - Events with "coffee", "snacks", "refreshments", "beverages" in the title or description
-   - If title contains "Coffee" + "Social" = HIGH CONFIDENCE (0.9-1.0) food event
+   - If title contains "Coffee" + "Social" or "Coffee" + "Chat" = HIGH CONFIDENCE (0.9-1.0) food event
 
 Return ONLY the JSON object, no markdown formatting or extra text."""
 
