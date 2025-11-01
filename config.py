@@ -26,10 +26,10 @@ class Config:
     MICROSOFT_CLIENT_ID = os.getenv('MICROSOFT_CLIENT_ID')
     MICROSOFT_CLIENT_SECRET = os.getenv('MICROSOFT_CLIENT_SECRET')
     MICROSOFT_TENANT_ID = os.getenv('MICROSOFT_TENANT_ID', 'common')
-    MICROSOFT_REDIRECT_URI = os.getenv('MICROSOFT_REDIRECT_URI', 'http://localhost:5000/auth/microsoft/callback')
+    MICROSOFT_REDIRECT_URI = os.getenv('MICROSOFT_REDIRECT_URI', 'http://localhost:5050/auth/microsoft/callback')
 
     # Google Calendar
-    GOOGLE_REDIRECT_URI = os.getenv('GOOGLE_REDIRECT_URI', 'http://localhost:5000/auth/google/callback')
+    GOOGLE_REDIRECT_URI = os.getenv('GOOGLE_REDIRECT_URI', 'http://localhost:5050/auth/google/callback')
 
     # Scanning Configuration
     EMAIL_SEARCH_QUERY = os.getenv('EMAIL_SEARCH_QUERY', 'food OR pizza OR lunch OR breakfast OR dinner OR snacks OR catering')
@@ -47,7 +47,7 @@ class Config:
     # Flask
     FLASK_SECRET_KEY = os.getenv('FLASK_SECRET_KEY', 'dev-secret-key-change-in-production')
     FLASK_ENV = os.getenv('FLASK_ENV', 'development')
-    FLASK_PORT = int(os.getenv('FLASK_PORT', 5000))
+    FLASK_PORT = int(os.getenv('FLASK_PORT', 5050))
 
     # Analytics & Monitoring
     ENABLE_LLM_TRACKING = os.getenv('ENABLE_LLM_TRACKING', 'true').lower() == 'true'

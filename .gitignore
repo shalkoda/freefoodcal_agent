@@ -44,6 +44,7 @@ token.pickle
 # Microsoft OAuth tokens
 .auth_cache/
 ms_token_cache.bin
+microsoft_token_cache.bin
 
 # IDE
 .vscode/

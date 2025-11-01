@@ -78,7 +78,7 @@ pip install -r requirements.txt
 
 1. Go to [Azure Portal](https://portal.azure.com)
 2. Register a new app in "App registrations"
-3. Add redirect URI: `http://localhost:5000/auth/microsoft/callback`
+3. Add redirect URI: `http://localhost:5050/auth/microsoft/callback`
 4. Grant permissions: `User.Read`, `Mail.Read`
 5. Generate client secret
 6. Copy Client ID, Client Secret, Tenant ID
@@ -89,7 +89,7 @@ pip install -r requirements.txt
 2. Create a new project
 3. Enable Google Calendar API
 4. Create OAuth 2.0 credentials
-5. Add redirect URI: `http://localhost:5000/auth/google/callback`
+5. Add redirect URI: `http://localhost:5050/auth/google/callback`
 6. Download `credentials.json`
 7. Place in project root
 
@@ -127,7 +127,7 @@ python run.py setup
 **Option A: Web Interface** (Recommended)
 ```bash
 python run.py web
-# Open http://localhost:5000
+# Open http://localhost:5050
 ```
 
 **Option B: Command Line Scan**
@@ -173,7 +173,7 @@ Cohere extracts:
 
 ## 📊 Analytics & Monitoring
 
-Access the web dashboard at `http://localhost:5000` to view:
+Access the web dashboard at `http://localhost:5050` to view:
 
 - **LLM Usage**: Cohere vs Gemini call counts, success rates
 - **Filter Performance**: How many emails pass each tier

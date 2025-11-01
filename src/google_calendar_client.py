@@ -42,7 +42,7 @@ class GoogleCalendarClient:
         flow = InstalledAppFlow.from_client_secrets_file(
             self.credentials_file,
             self.SCOPES,
-            redirect_uri=os.getenv('GOOGLE_REDIRECT_URI', 'http://localhost:5000/auth/google/callback')
+            redirect_uri=os.getenv('GOOGLE_REDIRECT_URI', 'http://localhost:5050/auth/google/callback')
         )
 
         auth_url, _ = flow.authorization_url(prompt='consent')
