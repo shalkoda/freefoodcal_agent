@@ -44,7 +44,7 @@ class CohereEventExtractor:
         self.total_calls = 0
         self.successful_extractions = 0
 
-    def extract_events(self, email_content, email_date=None):
+    def extract_events(self, email_content, email_date=None, email_subject=None):
         """
         🔥 PRIMARY COHERE INTEGRATION
 
@@ -59,6 +59,7 @@ class CohereEventExtractor:
         Args:
             email_content: Raw email body
             email_date: Reference date for relative date parsing
+            email_subject: Email subject line (important for event detection)
 
         Returns:
             {
@@ -89,7 +90,7 @@ class CohereEventExtractor:
             return self._empty_result()
 
         today = email_date or datetime.now()
-        prompt = self._build_extraction_prompt(email_content, today)
+        prompt = self._build_extraction_prompt(email_content, today, email_subject)
 
         try:
             # 🔥 COHERE API CALL
@@ -132,7 +133,7 @@ class CohereEventExtractor:
             print(f"❌ Cohere API error: {e}")
             return self._empty_result(error=str(e))
 
-    def _build_extraction_prompt(self, email_content, today_date):
+    def _build_extraction_prompt(self, email_content, today_date, email_subject=None):
         """
         🎨 PROMPT ENGINEERING SHOWCASE
 
@@ -154,13 +155,21 @@ class CohereEventExtractor:
             days_until_monday = 7
         next_monday = (today_date + timedelta(days=days_until_monday)).strftime('%Y-%m-%d')
 
+        # Include subject in prompt if available (critical for "Coffee Social" detection)
+        subject_section = ""
+        subject_instructions = ""
+        if email_subject:
+            subject_section = f"\nEMAIL SUBJECT: {email_subject}\n\n"
+            subject_instructions = "\n⚠️  CRITICAL: Check the EMAIL SUBJECT above - it often contains the event name (e.g., 'CS CARES Coffee Social', 'Coffee Social', 'Pizza Party'). If the subject contains 'Coffee Social' or 'Coffee Hour', it is ALWAYS a food event with coffee provided.\n"
+            # Note: Subject often contains critical info like "Coffee Social", "Pizza Party", etc.
+
         prompt = f"""You are an AI assistant specialized in extracting event information from emails.
 
 CONTEXT:
 - Today is {today_str} ({day_name})
 - You're looking for events that mention FREE FOOD, catering, meals, refreshments, coffee, snacks, or any consumables provided
 
-EMAIL TO ANALYZE:
+{subject_section}{subject_instructions}EMAIL TO ANALYZE:
 ```
 {email_content[:3000]}
 ```
@@ -168,28 +177,46 @@ EMAIL TO ANALYZE:
 TASK:
 Extract ALL events where food, drinks, coffee, snacks, refreshments, or catering is provided. Return ONLY valid JSON.
 
-IMPORTANT: 
-- "Coffee Social", "Coffee Hour", "Coffee & Donuts" = FOOD EVENT (coffee provided)
-- "Lunch Meeting", "Pizza Party" = FOOD EVENT
-- Any event with "social" + food/drinks = FOOD EVENT
+CRITICAL RULES - These are ALWAYS food events:
+- "Coffee Social" = FOOD EVENT (coffee is provided at social events)
+- "CS CARES Coffee Social" = FOOD EVENT (coffee provided)
+- "Coffee Hour" = FOOD EVENT (coffee provided)
+- "Coffee & Donuts" = FOOD EVENT (coffee and donuts provided)
+- Any event with "Coffee" in the title = FOOD EVENT (coffee is a consumable)
+- Any event with "Social" in the title that mentions coffee/food = FOOD EVENT
+- "Lunch Meeting" = FOOD EVENT (lunch provided)
+- "Pizza Party" = FOOD EVENT (pizza provided)
+- Any event with explicit time/location + food/drinks = FOOD EVENT
 - Refreshments, snacks, beverages = FOOD EVENT
+
+EXAMPLES OF FOOD EVENTS:
+- "CS CARES Coffee Social" at 4pm = coffee provided
+- "Coffee Social" = coffee provided
+- "Team Lunch" = lunch provided
+- "Pizza Party" = pizza provided
 
 OUTPUT FORMAT:
 {{
   "has_food_event": true,
   "events": [
     {{
-      "event_name": "Weekly Team Standup",
-      "date": "2025-11-15",
-      "time": "14:00",
-      "end_time": "15:00",
-      "location": "Conference Room A",
-      "food_type": "pizza",
+      "event_name": "CS CARES Coffee Social",
+      "date": "2025-10-30",
+      "time": "16:00",
+      "end_time": "17:30",
+      "location": "4401 Siebel Center",
+      "food_type": "coffee",
       "confidence": 0.95,
-      "reasoning": "Email explicitly states 'pizza will be provided at 2pm in Conf Room A'"
+      "reasoning": "Title explicitly states 'Coffee Social' which means coffee is provided"
     }}
   ]
 }}
+
+EXAMPLE FOR COFFEE SOCIAL:
+If email title contains "Coffee Social" or "Coffee Hour":
+- has_food_event: true
+- food_type: "coffee"
+- confidence: 0.9-1.0 (high confidence because coffee is implicit in the title)
 
 EXTRACTION RULES:
 
@@ -236,10 +263,14 @@ EXTRACTION RULES:
    - Past events
    - Cancelled events
    
-9. INCLUDE these as food events:
-   - Coffee Social / Coffee Hour (coffee provided)
-   - Any "Social" event with refreshments mentioned
+9. INCLUDE these as food events (these are ALWAYS food events):
+   - "Coffee Social" (coffee is ALWAYS provided at coffee socials)
+   - "CS CARES Coffee Social" (coffee is provided)
+   - "Coffee Hour" (coffee is provided)
+   - Any event with "Coffee" in the title (coffee is a consumable)
+   - Any "Social" event that mentions coffee/food/beverages
    - Events with "coffee", "snacks", "refreshments", "beverages" in the title or description
+   - If title contains "Coffee" + "Social" = HIGH CONFIDENCE (0.9-1.0) food event
 
 Return ONLY the JSON object, no markdown formatting or extra text."""
 

@@ -200,9 +200,11 @@ class FoodEventAgent:
                 print(f"    🔵 Tier 3: Cohere extraction (budget: {cohere_budget_remaining} remaining)...")
 
                 extraction_start = datetime.now()
+                # Pass email subject to extraction - critical for "Coffee Social" detection
                 extraction = self.cohere_extractor.extract_events(
                     content,
-                    email_date=datetime.now()
+                    email_date=datetime.now(),
+                    email_subject=email.get('subject', '')
                 )
                 processing_time = (datetime.now() - extraction_start).total_seconds() * 1000
 
