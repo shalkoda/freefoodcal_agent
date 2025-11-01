@@ -96,14 +96,26 @@ function triggerScan() {
             if (data.success) {
                 const results = data.results;
                 statusDiv.innerHTML = `
-                    <p style="color: green;">✅ Scan complete!</p>
-                    <p>Emails scanned: ${results.emails_scanned}</p>
-                    <p>Events found: ${results.events_found}</p>
-                    <p>Events added: ${results.events_added}</p>
-                    <p>Cohere calls: ${results.cohere_calls}</p>
+                    <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin-top: 10px;">
+                        <p style="color: green; font-weight: bold; margin-bottom: 10px;">✅ Scan complete!</p>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9em;">
+                            <div><strong>Emails scanned:</strong> ${results.emails_scanned || 0}</div>
+                            <div><strong>✅ Passed Tier 1:</strong> ${results.passed_tier1_heuristic || 0}</div>
+                            <div><strong>✅ Passed Tier 2:</strong> ${results.passed_tier2_gemini || 0}</div>
+                            <div><strong>🔵 Processed Tier 3:</strong> ${results.processed_tier3_cohere || 0}</div>
+                            <div><strong>❌ Filtered Tier 1:</strong> ${results.filtered_tier1 || 0}</div>
+                            <div><strong>❌ Filtered Tier 2:</strong> ${results.filtered_tier2 || 0}</div>
+                            <div><strong>🟢 Gemini calls:</strong> ${results.gemini_calls || 0}</div>
+                            <div><strong>🔵 Cohere calls:</strong> ${results.cohere_calls || 0}</div>
+                            <div><strong>🍕 Events found:</strong> ${results.events_found || 0}</div>
+                            <div><strong>📅 Events added:</strong> ${results.events_added || 0}</div>
+                            ${results.skipped_budget ? `<div><strong>⚠️ Budget limit:</strong> ${results.skipped_budget}</div>` : ''}
+                            ${results.errors && results.errors.length > 0 ? `<div><strong>❌ Errors:</strong> ${results.errors.length}</div>` : ''}
+                        </div>
+                    </div>
                 `;
-                // Reload page after 2 seconds
-                setTimeout(() => location.reload(), 2000);
+                // Reload page after 3 seconds
+                setTimeout(() => location.reload(), 3000);
             } else {
                 statusDiv.innerHTML = `<p style="color: red;">❌ Error: ${data.error}</p>`;
             }

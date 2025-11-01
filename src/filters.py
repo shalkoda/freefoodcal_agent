@@ -19,6 +19,16 @@ def quick_spam_check(email_content, sender=""):
     """
     content_lower = email_content.lower()
 
+    # Check for food keywords first - don't filter out food-related emails
+    # Include "coffee chat", "party", and food-related phrases as food events
+    food_keywords = ['lunch', 'food', 'pizza', 'coffee', 'breakfast', 'dinner', 'snacks', 
+                     'catering', 'refreshments', 'drinks', 'beverages', 'meal', 'social', 'chat',
+                     'goodies', 'treat', 'treats', 'punch', 'bite', 'party']
+    has_food_mention = (any(keyword in content_lower for keyword in food_keywords) or 
+                        'coffee chat' in content_lower or 
+                        'trick-or-treat' in content_lower or
+                        'grab a bite' in content_lower)
+
     # Strong spam indicators
     spam_keywords = [
         'unsubscribe', 'opt out', 'opt-out',
@@ -30,19 +40,30 @@ def quick_spam_check(email_content, sender=""):
 
     spam_score = sum(1 for keyword in spam_keywords if keyword in content_lower)
 
-    if spam_score >= 3:
-        return True, f"High spam score: {spam_score}"
+    # If email mentions food, be more lenient (many legitimate events have unsubscribe links)
+    if has_food_mention:
+        # Only mark as spam if it has many spam indicators
+        if spam_score >= 5:
+            return True, f"High spam score despite food mention: {spam_score}"
+    else:
+        # No food mention - use normal thresholds
+        if spam_score >= 3:
+            return True, f"High spam score: {spam_score}"
 
-    # Marketing email patterns
+    # Marketing email patterns - but NOT if it mentions food (legitimate events often have unsubscribe links)
     if 'unsubscribe' in content_lower and 'http' in content_lower:
-        return True, "Marketing email pattern detected"
+        # Allow through if food is mentioned (many legitimate event emails have unsubscribe)
+        if not has_food_mention:
+            return True, "Marketing email pattern detected"
 
     # Promotional sender patterns
     if sender:
         sender_lower = sender.lower()
         promotional_patterns = ['noreply', 'no-reply', 'marketing', 'promo', 'newsletter']
         if any(pattern in sender_lower for pattern in promotional_patterns):
-            return True, f"Promotional sender: {sender}"
+            # Allow through if food is mentioned (some legitimate senders use noreply)
+            if not has_food_mention:
+                return True, f"Promotional sender: {sender}"
 
     return False, "Passed heuristic check"
 
@@ -64,7 +85,12 @@ def has_food_keywords(email_content):
         'bbq', 'potluck', 'refreshments', 'meal',
         'buffet', 'free food', 'provided', 'served',
         'social',  # "Coffee Social", "CS CARES Coffee Social" - social events often have food
-        'drinks', 'beverages'  # "Opening Ceremony with drinks and snacks" - drinks are consumables
+        'drinks', 'beverages',  # "Opening Ceremony with drinks and snacks" - drinks are consumables
+        'chat',  # "Coffee Chat", "WIE Coffee Chat" - coffee chats provide food
+        'tea', 'cookies', 'fruit', 'shmear',  # Common food items in event emails
+        'goodies', 'treat', 'treats', 'trick-or-treat',  # Halloween events: "trick-or-treat bag loaded with goodies"
+        'punch', 'bite', 'grab a bite', 'homemade',  # Party events: "homemade punch", "grab a bite"
+        'party'  # Party events often have food (Halloween party, pizza party, etc.)
     ]
 
     content_lower = email_content.lower()

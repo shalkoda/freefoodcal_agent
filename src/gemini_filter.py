@@ -24,8 +24,22 @@ class GeminiSemanticFilter:
             raise ValueError("GOOGLE_API_KEY not found in environment variables")
 
         genai.configure(api_key=api_key)
+        # Use gemini-1.5-flash (not -latest suffix) - this is the correct model name
         model_name = os.getenv('GEMINI_MODEL', 'gemini-1.5-flash')
-        self.model = genai.GenerativeModel(model_name)
+        try:
+            self.model = genai.GenerativeModel(model_name)
+        except Exception as e:
+            # Fallback to gemini-pro if flash model not available
+            if 'flash' in model_name.lower():
+                print(f"  ⚠️  Model {model_name} not available, falling back to gemini-pro")
+                try:
+                    self.model = genai.GenerativeModel('gemini-pro')
+                except Exception as e2:
+                    print(f"  ⚠️  Gemini-pro also failed: {e2}, bypassing Gemini filter")
+                    # Set a flag to bypass Gemini if model initialization fails
+                    self.model = None
+            else:
+                raise
 
     def is_genuine_event(self, email_content, sender_email="", email_subject=""):
         """
@@ -43,30 +57,44 @@ class GeminiSemanticFilter:
         # Include subject in prompt - critical for "Coffee Social" detection
         subject_section = f"Subject: {email_subject}\n\n" if email_subject else ""
         
-        prompt = f"""Is this email a genuine invitation to an internal event with food? Answer YES or NO only.
+        prompt = f"""Is this email a genuine invitation to an internal event where FOOD/DRINKS/REFRESHMENTS are PROVIDED? Answer YES or NO only.
 
 Sender: {sender_email}
 {subject_section}Email: {email_content[:800]}
 
-Genuine event indicators:
+CRITICAL: Only answer YES if:
+- Food/drinks/refreshments are explicitly mentioned as being provided (NOT "bring your own lunch")
+- Event has food-related keywords: coffee, lunch, pizza, snacks, refreshments, drinks, goodies, treats, catering, etc.
+- Specific event with food: "Coffee Social", "Coffee Chat", "Halloween Party" (with treats), "Pizza Party", etc.
+
+Genuine food event indicators:
 - Internal sender (@company domain, @edu, @gov)
 - Specific date/time/location
-- Food explicitly mentioned (coffee, lunch, pizza, snacks, refreshments)
-- Event title in subject (e.g., "Coffee Social", "CS CARES Coffee Social")
-- RSVP or action requested
-- Casual/team language
+- Food explicitly mentioned as provided (coffee, lunch, pizza, snacks, refreshments, drinks, goodies, treats)
+- Event title suggests food: "Coffee Social", "Coffee Chat", "Halloween Party", "Pizza Party", etc.
+- Language indicating food provided: "we provide", "grab a bite", "treats", "goodies", "refreshments"
 
-CRITICAL: If the subject contains "Coffee Social" or "Coffee Hour", this is ALWAYS a genuine event.
+CRITICAL EXAMPLES:
+- "Coffee Social" = YES (coffee is provided)
+- "Coffee Chat" = YES (coffee/food typically provided)
+- "Halloween Party" with "treats" or "goodies" = YES
+- "Team Lunch" = YES (lunch provided)
+- "Pizza Party" = YES (pizza provided)
 
 Spam indicators:
 - External sender
 - Marketing language
-- No specific details
-- Unsubscribe links
-- Generic promotional content
+- No food mentioned
+- "Bring your own lunch" = NO (no food provided)
+- Generic promotional content without food
 
 Answer (YES/NO):"""
 
+        # Bypass Gemini if model initialization failed
+        if self.model is None:
+            print(f"  ⚠️  Gemini model not initialized - bypassing filter (allowing to Cohere)")
+            return True
+            
         try:
             response = self.model.generate_content(prompt)
             answer = response.text.strip().lower()

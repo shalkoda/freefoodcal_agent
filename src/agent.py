@@ -104,17 +104,23 @@ class FoodEventAgent:
                 # Skip if already processed, but allow re-processing if needed
                 if self.db.is_email_processed(email['id']):
                     # Allow re-processing emails that might have been incorrectly filtered
-                    # Re-process coffee, social, and other food-related emails that may have been missed
+                    # Check if subject or preview contains any food-related keywords
                     subject = email.get('subject', '') or ''
                     content_preview = email.get('bodyPreview', '') or ''
                     combined_text = f"{subject} {content_preview}".lower()
                     
-                    # Re-process if subject or preview contains food keywords
-                    if any(keyword in combined_text for keyword in ['coffee', 'social', 'cares', 'drinks', 'snacks', 'refreshments', 'beverages']):
-                        print(f"    🔄 Re-processing coffee/food email that might have been incorrectly filtered...")
-                        # Continue processing - clear old record will happen in save_processed_email
-                    elif any(keyword in combined_text for keyword in ['pizza', 'lunch', 'food']):
-                        print(f"    🔄 Re-processing email that might have been incorrectly filtered...")
+                    # Comprehensive list of food keywords to re-process
+                    food_keywords = [
+                        'coffee', 'social', 'cares', 'drinks', 'snacks', 'refreshments', 'beverages',
+                        'pizza', 'lunch', 'food', 'breakfast', 'dinner', 'catering',
+                        'chat', 'tea', 'cookies', 'fruit', 'bagels', 'donuts',
+                        'goodies', 'treat', 'treats', 'trick-or-treat', 'punch', 'bite', 'party',
+                        'meal', 'sandwiches', 'tacos', 'bbq', 'potluck', 'buffet'
+                    ]
+                    
+                    # Re-process if subject or preview contains any food keywords
+                    if any(keyword in combined_text for keyword in food_keywords):
+                        print(f"    🔄 Re-processing food email that might have been incorrectly filtered...")
                         # Continue processing - clear old record will happen in save_processed_email
                     else:
                         continue
@@ -185,7 +191,7 @@ class FoodEventAgent:
                     continue
 
                 results['passed_tier2_gemini'] += 1
-                print(f"    ✅ Tier 2 passed (genuine event detected)")
+                print(f"    ✅ Tier 2 passed (genuine food event detected)")
 
                 # Track Gemini usage
                 self.db.save_llm_usage(
@@ -196,6 +202,11 @@ class FoodEventAgent:
                     success=True
                 )
 
+                # Double-check: Only use Cohere if we're confident there's a food event
+                # This prevents wasting Cohere calls on borderline cases
+                # Tier 1 already verified food keywords exist, and Tier 2 verified it's a genuine food event
+                # So we're good to proceed to Cohere
+                
                 # ========================================
                 # TIER 3: COHERE EXTRACTION (Budget-controlled)
                 # ========================================
