@@ -63,6 +63,7 @@ logs/
 # Flask
 instance/
 .webassets-cache
+flask_session/
 
 # Testing
 .pytest_cache/
