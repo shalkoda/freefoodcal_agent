@@ -101,16 +101,25 @@ class FoodEventAgent:
             for email in emails:
                 results['emails_scanned'] += 1
 
-                # Skip if already processed
+                # Skip if already processed, but allow re-processing if needed
                 if self.db.is_email_processed(email['id']):
-                    continue
+                    # Allow re-processing emails that were filtered at Tier 2 (Gemini)
+                    # since Gemini was bypassing incorrectly before
+                    # This helps when we fix the filtering logic
+                    subject = email.get('subject', '') or ''
+                    if any(keyword in subject.lower() for keyword in ['coffee', 'social', 'pizza', 'lunch', 'food']):
+                        print(f"    🔄 Re-processing email that might have been incorrectly filtered...")
+                        # Continue processing - clear old record will happen in save_processed_email
+                    else:
+                        continue
 
                 # Get full content
                 content = self.outlook.get_email_content(email['id'])
                 if not content:
                     continue
 
-                print(f"\n  📨 [{results['emails_scanned']}] {email['subject'][:60]}...")
+                subject = email.get('subject', 'No Subject') or 'No Subject'
+                print(f"\n  📨 [{results['emails_scanned']}] {subject[:60]}...")
 
                 # ========================================
                 # TIER 1: HEURISTIC FILTER (Free, instant)
@@ -124,7 +133,7 @@ class FoodEventAgent:
                     results['filtered_tier1'] += 1
 
                     self.db.save_processed_email(
-                        email['id'], email['subject'], email['sender'],
+                        email['id'], email.get('subject', 'No Subject'), email.get('sender', 'Unknown'),
                         analysis_data={
                             'filter_tier': 'heuristic',
                             'filter_reason': tier1_reason,
@@ -148,7 +157,7 @@ class FoodEventAgent:
                     results['filtered_tier2'] += 1
 
                     self.db.save_processed_email(
-                        email['id'], email['subject'], email['sender'],
+                        email['id'], email.get('subject', 'No Subject'), email.get('sender', 'Unknown'),
                         analysis_data={
                             'filter_tier': 'gemini',
                             'filter_reason': 'Not genuine event',
@@ -202,87 +211,113 @@ class FoodEventAgent:
                 results['processed_tier3_cohere'] += 1
 
                 # Track LLM usage
+                # Use model name from config
+                model_name = os.getenv('COHERE_MODEL', 'command-r7b-12-2024')
                 self.db.save_llm_usage(
                     provider='cohere',
-                    model='command-r-plus',
+                    model=model_name,
                     email_id=email['id'],
                     purpose='extraction',
-                    success=not extraction.get('error'),
+                    success=extraction and not extraction.get('error'),
                     processing_time_ms=int(processing_time)
                 )
 
                 # Process results
-                if extraction.get('has_food_event'):
-                    events = extraction['events']
-                    print(f"    ✅ Found {len(events)} event(s)")
+                # Check if extraction is valid and has events
+                if not extraction:
+                    print(f"    ⚠️  Extraction returned None or empty")
+                elif extraction.get('error'):
+                    print(f"    ❌ Extraction error: {extraction.get('error')}")
+                elif extraction.get('has_food_event'):
+                    events = extraction.get('events', [])
+                    if not events:
+                        print(f"    ℹ️  No food events extracted")
+                    else:
+                        print(f"    ✅ Found {len(events)} event(s)")
 
-                    for event in events:
-                        if event['confidence'] >= self.min_confidence:
-                            results['events_found'] += 1
+                        for event in events:
+                            if event.get('confidence', 0) >= self.min_confidence:
+                                results['events_found'] += 1
 
-                            # Create calendar event if client provided
-                            if calendar_client and event['date'] != 'unknown':
-                                try:
-                                    # Check duplicate
-                                    if calendar_client.check_duplicate(event['event_name'], event['date']):
-                                        print(f"       ⏭️  Duplicate: {event['event_name']}")
-                                        continue
+                                # Create calendar event if client provided
+                                if calendar_client and event.get('date') != 'unknown':
+                                    try:
+                                        # Check duplicate
+                                        if calendar_client.check_duplicate(event.get('event_name', ''), event.get('date', '')):
+                                            print(f"       ⏭️  Duplicate: {event.get('event_name', 'Unknown')}")
+                                            continue
 
-                                    # Create event
-                                    cal_event = calendar_client.create_event(
-                                        event_name=event['event_name'],
-                                        date=event['date'],
-                                        time=event['time'],
-                                        end_time=event.get('end_time', 'unknown'),
-                                        location=event.get('location', 'TBD'),
-                                        food_type=event.get('food_type', 'food'),
-                                        description=f"🍕 Free Food!\n\nFood: {event['food_type']}\nConfidence: {event['confidence']:.0%}\n\nExtracted by Cohere AI"
-                                    )
+                                        # Create event
+                                        cal_event = calendar_client.create_event(
+                                            event_name=event.get('event_name', 'Food Event'),
+                                            date=event.get('date', 'unknown'),
+                                            time=event.get('time', '12:00'),
+                                            end_time=event.get('end_time', 'unknown'),
+                                            location=event.get('location', 'TBD'),
+                                            food_type=event.get('food_type', 'food'),
+                                            description=f"🍕 Free Food!\n\nFood: {event.get('food_type', 'food')}\nConfidence: {event.get('confidence', 0):.0%}\n\nExtracted by Cohere AI"
+                                        )
 
-                                    # Save to database
+                                        # Save to database
+                                        self.db.save_found_event(
+                                            email_id=email['id'],
+                                            event_data=event,
+                                            calendar_id=cal_event.get('event_id'),
+                                            calendar_link=cal_event.get('html_link')
+                                        )
+
+                                        results['events_added'] += 1
+                                        print(f"       ✅ Added to calendar: {event.get('event_name', 'Food Event')}")
+
+                                    except Exception as e:
+                                        print(f"       ❌ Calendar error: {e}")
+                                        results['errors'].append({
+                                            'email_id': email['id'],
+                                            'event': event.get('event_name', 'Unknown'),
+                                            'error': str(e)
+                                        })
+                                else:
+                                    # No calendar client - just save event data
                                     self.db.save_found_event(
                                         email_id=email['id'],
                                         event_data=event,
-                                        calendar_id=cal_event['event_id'],
-                                        calendar_link=cal_event['html_link']
+                                        calendar_id=None,
+                                        calendar_link=None
                                     )
-
-                                    results['events_added'] += 1
-                                    print(f"       ✅ Added to calendar: {event['event_name']}")
-
-                                except Exception as e:
-                                    print(f"       ❌ Calendar error: {e}")
-                                    results['errors'].append({
-                                        'email_id': email['id'],
-                                        'event': event['event_name'],
-                                        'error': str(e)
-                                    })
+                                    print(f"       💾 Saved event (no calendar): {event.get('event_name', 'Unknown')}")
                             else:
-                                # No calendar client - just save event data
-                                self.db.save_found_event(
-                                    email_id=email['id'],
-                                    event_data=event,
-                                    calendar_id=None,
-                                    calendar_link=None
-                                )
-                                print(f"       💾 Saved event (no calendar): {event['event_name']}")
-                        else:
-                            print(f"       ⚠️  Low confidence ({event['confidence']:.2f}): {event['event_name']}")
+                                print(f"       ⚠️  Low confidence ({event.get('confidence', 0):.2f}): {event.get('event_name', 'Unknown')}")
                 else:
                     print(f"    ℹ️  No food events extracted")
 
                 # Save processed email
-                self.db.save_processed_email(
-                    email['id'], email['subject'], email['sender'],
-                    analysis_data={
-                        'filter_tier': 'passed_all',
-                        'cohere_extraction': extraction,
-                        'events_found': len(extraction.get('events', []))
-                    }
-                )
+                try:
+                    events_count = len(extraction.get('events', [])) if extraction else 0
+                    self.db.save_processed_email(
+                        email['id'], email.get('subject', 'No Subject'), email.get('sender', 'Unknown'),
+                        analysis_data={
+                            'filter_tier': 'passed_all',
+                            'cohere_extraction': extraction if extraction else {},
+                            'events_found': events_count
+                        }
+                    )
+                except Exception as e:
+                    print(f"    ⚠️  Error saving processed email: {e}")
+                    results['errors'].append({
+                        'email_id': email['id'],
+                        'step': 'save_processed_email',
+                        'error': str(e)
+                    })
 
             # Save scan stats
-            self.db.save_filter_stats(scan_id, results)
+            try:
+                self.db.save_filter_stats(scan_id, results)
+            except Exception as e:
+                print(f"⚠️  Error saving scan stats: {e}")
+                results['errors'].append({
+                    'step': 'save_filter_stats',
+                    'error': str(e)
+                })
 
             # Print summary
             self._print_summary(results)
@@ -290,8 +325,10 @@ class FoodEventAgent:
             return results
 
         except Exception as e:
+            import traceback
             print(f"❌ Scan error: {e}")
-            results['errors'].append({'general_error': str(e)})
+            print(f"   Traceback: {traceback.format_exc()}")
+            results['errors'].append({'general_error': str(e), 'traceback': traceback.format_exc()})
             return results
 
     def _print_summary(self, results):
