@@ -4,6 +4,10 @@
 {% block subtitle %}LLM Usage & Performance Metrics{% endblock %}
 
 {% block content %}
+<div style="margin-bottom: 20px;">
+    <a href="/" class="btn">← Back to Dashboard</a>
+</div>
+
 <div class="card">
     <h2>🤖 LLM Usage (Last 30 Days)</h2>
     {% if llm_stats %}
@@ -36,7 +40,7 @@
             </tbody>
         </table>
     {% else %}
-        <p>No LLM usage data yet.</p>
+        <p style="font-size: 1em;">No LLM usage data yet.</p>
     {% endif %}
 </div>
 
@@ -68,7 +72,7 @@
             </tbody>
         </table>
     {% else %}
-        <p>No filter performance data yet.</p>
+        <p style="font-size: 1em;">No filter performance data yet.</p>
     {% endif %}
 </div>
 
@@ -96,9 +100,5 @@
             </tbody>
         </table>
     {% endif %}
-</div>
-
-<div style="margin-top: 20px;">
-    <a href="/" class="btn">← Back to Dashboard</a>
 </div>
 {% endblock %}

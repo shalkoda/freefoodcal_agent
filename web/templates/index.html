@@ -22,8 +22,10 @@
 
 <div class="card">
     <h2>Actions</h2>
-    <button class="btn" onclick="triggerScan()">🔍 Scan Emails Now</button>
-    <a href="/analytics" class="btn btn-secondary">📊 View Analytics</a>
+    <div style="text-align: center; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+        <button class="btn" onclick="triggerScan()">🔍 Scan Emails Now</button>
+        <a href="/analytics" class="btn btn-secondary">📊 View Analytics</a>
+    </div>
     <div id="scan-status" style="margin-top: 15px;"></div>
 </div>
 
@@ -55,7 +57,7 @@
             </tbody>
         </table>
     {% else %}
-        <p>No events found yet. Click "Scan Emails Now" to start!</p>
+        <p style="font-size: 1em;">No events found yet. Click "Scan Emails Now" to start!</p>
     {% endif %}
 </div>
 
@@ -88,7 +90,7 @@
 <script>
 function triggerScan() {
     const statusDiv = document.getElementById('scan-status');
-    statusDiv.innerHTML = '<p style="color: #667eea;">🔄 Scanning emails... This may take a minute.</p>';
+    statusDiv.innerHTML = '<p style="color: #8b6f9e; font-size: 1em; text-shadow: 0.5px 0.5px 0px #ffffff;">🔄 Scanning emails... This may take a minute.</p>';
 
     fetch('/scan', { method: 'POST' })
         .then(response => response.json())
@@ -96,9 +98,9 @@ function triggerScan() {
             if (data.success) {
                 const results = data.results;
                 statusDiv.innerHTML = `
-                    <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin-top: 10px;">
-                        <p style="color: green; font-weight: bold; margin-bottom: 10px;">✅ Scan complete!</p>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9em;">
+                    <div style="background: #fefefe; padding: 15px; border: 2px solid #d4a5d9; margin-top: 10px; box-shadow: 0 0 10px rgba(212, 165, 217, 0.3);">
+                        <p style="color: #8b6f9e; font-weight: bold; margin-bottom: 10px; font-size: 1em; text-shadow: 0.5px 0.5px 0px #ffffff;">✅ Scan complete!</p>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9em; color: #8b6f9e; text-shadow: 0.5px 0.5px 0px #ffffff;">
                             <div><strong>Emails scanned:</strong> ${results.emails_scanned || 0}</div>
                             <div><strong>✅ Passed Tier 1:</strong> ${results.passed_tier1_heuristic || 0}</div>
                             <div><strong>✅ Passed Tier 2:</strong> ${results.passed_tier2_gemini || 0}</div>
@@ -117,11 +119,11 @@ function triggerScan() {
                 // Reload page after 3 seconds
                 setTimeout(() => location.reload(), 3000);
             } else {
-                statusDiv.innerHTML = `<p style="color: red;">❌ Error: ${data.error}</p>`;
+                statusDiv.innerHTML = `<p style="color: #ff8fab; font-size: 1em; text-shadow: 0.5px 0.5px 0px #ffffff;">❌ Error: ${data.error}</p>`;
             }
         })
         .catch(error => {
-            statusDiv.innerHTML = `<p style="color: red;">❌ Error: ${error}</p>`;
+            statusDiv.innerHTML = `<p style="color: #ff8fab; font-size: 1em; text-shadow: 0.5px 0.5px 0px #ffffff;">❌ Error: ${error}</p>`;
         });
 }
 </script>
