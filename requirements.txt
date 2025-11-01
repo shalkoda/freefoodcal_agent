@@ -1,0 +1,48 @@
+# ============================================
+# LLM INTEGRATION (Hybrid Approach)
+# ============================================
+
+# 🔵 Cohere - Primary event extraction (SHOWCASE)
+cohere>=5.0.0
+
+# 🟢 Gemini - Spam filtering helper (FREE TIER)
+google-generativeai>=0.3.0
+
+# ============================================
+# EMAIL & CALENDAR APIs
+# ============================================
+
+# Microsoft Graph (Outlook)
+msal>=1.24.0
+requests>=2.31.0
+
+# Google Calendar
+google-auth>=2.23.0
+google-auth-oauthlib>=1.1.0
+google-auth-httplib2>=0.1.1
+google-api-python-client>=2.100.0
+
+# ============================================
+# WEB FRAMEWORK
+# ============================================
+flask>=3.0.0
+flask-session>=0.5.0
+
+# ============================================
+# UTILITIES
+# ============================================
+python-dotenv>=1.0.0
+APScheduler>=3.10.0
+
+# HTML Parsing
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+
+# Date/Time parsing
+python-dateutil>=2.8.0
+
+# ============================================
+# TESTING
+# ============================================
+pytest>=7.4.0
+pytest-mock>=3.12.0
