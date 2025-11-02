@@ -349,7 +349,7 @@ Pull requests welcome! Please:
 
 ## 📧 Contact
 
-**Email**: [shalk2@illinois.edu]
+**Email**: [shalk2@illinois.edu] [bchau3@illinois.edu]
 
 ---
 
