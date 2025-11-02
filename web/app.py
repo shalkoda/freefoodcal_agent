@@ -26,12 +26,23 @@ app.config['SESSION_TYPE'] = 'filesystem'
 Session(app)
 
 # Initialize components
-agent = FoodEventAgent()
+agent = None  # Lazy initialization - only when needed
 db = Database()
 
 # Background scanning thread
 scanning_thread = None
 scanning_active = False
+
+
+def get_agent():
+    """Get or initialize FoodEventAgent (lazy initialization)"""
+    global agent
+    if agent is None:
+        try:
+            agent = FoodEventAgent()
+        except Exception as e:
+            raise ValueError(f"Failed to initialize FoodEventAgent: {e}. Please ensure COHERE_API_KEY and GOOGLE_API_KEY are set in .env file.")
+    return agent
 
 
 def run_automatic_scan():
@@ -52,6 +63,12 @@ def run_automatic_scan():
                 # Continue without calendar if auth fails
         
         print(f"[{datetime.now()}] 🔍 Starting automatic scan...")
+        try:
+            agent = get_agent()
+        except ValueError as e:
+            print(f"[{datetime.now()}] ❌ Cannot scan: {e}")
+            return
+        
         results = agent.scan_emails(calendar_client)
         print(f"[{datetime.now()}] ✅ Auto-scan complete: {results['events_found']} events found, {results['events_added']} added to calendar")
         
@@ -134,6 +151,15 @@ def scan():
                     'requires_auth': True
                 }), 400
 
+        # Get agent (lazy initialization)
+        try:
+            agent = get_agent()
+        except ValueError as e:
+            return jsonify({
+                'success': False,
+                'error': str(e)
+            }), 400
+        
         # Run scan
         results = agent.scan_emails(calendar_client)
 
@@ -308,12 +334,19 @@ def update_settings():
 
 
 if __name__ == '__main__':
-    # Validate config
-    Config.validate()
+    # Don't validate config on startup - allow server to start without API keys
+    # Config validation will happen when agent is initialized
+    print("⚠️  Note: API keys (COHERE_API_KEY, GOOGLE_API_KEY) are optional for UI access")
+    print("   Scans will require API keys to be configured in .env file")
     
-    # Start background scanner if auto-scan is enabled
-    if db.get_auto_scan_enabled():
-        start_background_scanner()
+    # Start background scanner if auto-scan is enabled (but don't fail if agent can't init)
+    try:
+        if db.get_auto_scan_enabled():
+            # Check if we can initialize agent
+            get_agent()
+            start_background_scanner()
+    except Exception as e:
+        print(f"⚠️  Background scanner not started: {e}")
 
     # Run app
     app.run(

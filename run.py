@@ -60,6 +60,10 @@ def main():
 
     elif args.mode == 'web':
         print("🌐 Starting Flask web application...")
+        print("⚠️  Note: API keys are optional for UI access")
+        print("   Scans will require API keys to be configured in .env file")
+        
+        # Don't validate config for web mode - allow server to start
         from web.app import app
         app.run(
             host='0.0.0.0',
