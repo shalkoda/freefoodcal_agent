@@ -8,7 +8,7 @@ python3 run.py setup
 ```
 ✅ Should create/update database with `user_settings` table
 
-### 2. Start Web Server
+### 2. Start the Web Server
 ```bash
 python3 run.py web
 ```
