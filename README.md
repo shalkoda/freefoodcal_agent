@@ -41,7 +41,7 @@ flowchart LR
 - **Tier 3**: Cohere extraction (structured event data) - ~2s, rate-limited 6s, budget-controlled
 - **Result**: ~70% reduction in Cohere calls while maintaining 94%+ accuracy!
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Prerequisites
 
