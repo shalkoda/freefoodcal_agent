@@ -309,7 +309,31 @@ Pull requests welcome! Please:
 2. Ensure free tier limits are respected
 3. Add tests for new features
 
-## 📧 Contact
+## Contributors
+
+**Shria (shalk2@illinois.edu)**
+- Developed the core 3-tier filtering pipeline architecture
+- Implemented Cohere event extraction and Gemini semantic filtering email scanning and parsing logic
+- Designed and implemented the Flask web interface with authentication flows and pastel theme
+- Created the analytics dashboard and real-time scanning features
+- Created the SQLite database schema and duplicate prevention system
+- Developed the "Free Food Cal" dedicated calendar creation function with food type emoji mapping
+
+**Bhavyaa (bchau3@illinois.edu)**
+- Built the calendar integration logic with Google Calendar API
+- Created event creation with proper date/time formatting and timezone handling
+- Developed duplicate detection algorithm to prevent duplicate calendar entries
+- Built event listing and retrieval functionality for calendar queries
+- Created error handling and exception management for calendar API calls
+
+**Claude Code (AI Assistant)**
+- Provided code assistance and implementation guidance throughout the project
+- Implemented OAuth authentication flows for Google Calendar and Microsoft Outlook
+- Helped with debugging, code refactoring, and documentation
+
+---
+
+## Feel Free to Contact!
 
 **Email**: [shalk2@illinois.edu] [bchau3@illinois.edu]
 
