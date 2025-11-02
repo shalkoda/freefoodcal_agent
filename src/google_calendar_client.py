@@ -31,6 +31,7 @@ class GoogleCalendarClient:
         self.token_file = token_file
         self.creds = None
         self.service = None
+        self.calendar_id = None  # Will be set lazily when first needed
 
     def get_auth_url(self):
         """
@@ -39,6 +40,13 @@ class GoogleCalendarClient:
         Returns:
             str: Authorization URL
         """
+        # Check if credentials file exists and is not empty
+        if not os.path.exists(self.credentials_file):
+            raise FileNotFoundError(f"Credentials file not found: {self.credentials_file}")
+        
+        if os.path.getsize(self.credentials_file) == 0:
+            raise ValueError(f"Credentials file is empty: {self.credentials_file}. Please add your Google OAuth credentials.")
+        
         flow = InstalledAppFlow.from_client_secrets_file(
             self.credentials_file,
             self.SCOPES,
@@ -104,10 +112,47 @@ class GoogleCalendarClient:
             self.authenticate()
         return self.creds
 
+    def get_or_create_calendar(self, calendar_name='Free Food Cal'):
+        """
+        Get calendar ID, creating the calendar if it doesn't exist
+
+        Args:
+            calendar_name: Name of the calendar to find or create
+
+        Returns:
+            str: Calendar ID
+        """
+        if not self.service:
+            self.authenticate()
+
+        try:
+            # Try to find existing calendar
+            calendar_list = self.service.calendarList().list().execute()
+            for calendar_item in calendar_list.get('items', []):
+                if calendar_item.get('summary') == calendar_name:
+                    print(f"📅 Found existing calendar: {calendar_name}")
+                    return calendar_item['id']
+
+            # Calendar doesn't exist, create it
+            print(f"📅 Creating new calendar: {calendar_name}")
+            calendar = {
+                'summary': calendar_name,
+                'description': 'Auto-generated calendar for free food events',
+                'timeZone': 'America/New_York'
+            }
+            created_calendar = self.service.calendars().insert(body=calendar).execute()
+            print(f"✅ Created calendar: {calendar_name} (ID: {created_calendar['id']})")
+            return created_calendar['id']
+
+        except HttpError as error:
+            print(f"❌ Error getting/creating calendar: {error}")
+            # Fallback to primary calendar
+            return 'primary'
+
     def create_event(self, event_name, date, time, end_time=None, location='TBD',
                     food_type='food', description='', timezone='America/New_York'):
         """
-        Create calendar event
+        Create calendar event in "Free Food Cal" calendar
 
         Args:
             event_name: Event title
@@ -125,6 +170,10 @@ class GoogleCalendarClient:
         if not self.service:
             self.authenticate()
 
+        # Get or create the "Free Food Cal" calendar
+        if not self.calendar_id:
+            self.calendar_id = self.get_or_create_calendar('Free Food Cal')
+
         # Format datetime
         start_datetime = self._format_datetime(date, time, timezone)
 
@@ -136,9 +185,34 @@ class GoogleCalendarClient:
             end_dt = start_dt + timedelta(hours=1)
             end_datetime = end_dt.isoformat()
 
+        # Map food type to emoji
+        food_emoji_map = {
+            'coffee': '☕',
+            'pizza': '🍕',
+            'lunch': '🍽️',
+            'breakfast': '🥐',
+            'dinner': '🍽️',
+            'snacks': '🍪',
+            'donuts': '🍩',
+            'cookies': '🍪',
+            'fruit': '🍎',
+            'sandwiches': '🥪',
+            'tacos': '🌮',
+            'bbq': '🍖',
+            'catering': '🍽️',
+            'refreshments': '🥤',
+            'beverages': '🥤',
+            'drinks': '🥤',
+            'treats': '🍬',
+            'goodies': '🍭',
+            'food': '🍕'  # Default fallback
+        }
+        
+        emoji = food_emoji_map.get(food_type.lower(), '🍕')  # Default to pizza emoji
+        
         # Build event
         event = {
-            'summary': f"🍕 {event_name}",
+            'summary': f"{emoji} {event_name}",
             'location': location,
             'description': f"{description}\n\n🍴 Food Type: {food_type}",
             'start': {
@@ -158,7 +232,7 @@ class GoogleCalendarClient:
         }
 
         try:
-            created_event = self.service.events().insert(calendarId='primary', body=event).execute()
+            created_event = self.service.events().insert(calendarId=self.calendar_id, body=event).execute()
             return {
                 'event_id': created_event['id'],
                 'html_link': created_event.get('htmlLink', '')
@@ -169,7 +243,7 @@ class GoogleCalendarClient:
 
     def check_duplicate(self, event_name, date):
         """
-        Check if event already exists on this date
+        Check if event already exists on this date in "Free Food Cal" calendar
 
         Args:
             event_name: Event name to check
@@ -181,13 +255,17 @@ class GoogleCalendarClient:
         if not self.service:
             self.authenticate()
 
+        # Get or create the "Free Food Cal" calendar
+        if not self.calendar_id:
+            self.calendar_id = self.get_or_create_calendar('Free Food Cal')
+
         try:
             # Get events for this day
             start_of_day = f"{date}T00:00:00Z"
             end_of_day = f"{date}T23:59:59Z"
 
             events_result = self.service.events().list(
-                calendarId='primary',
+                calendarId=self.calendar_id,
                 timeMin=start_of_day,
                 timeMax=end_of_day,
                 singleEvents=True,
@@ -210,7 +288,7 @@ class GoogleCalendarClient:
 
     def list_upcoming_events(self, days=7):
         """
-        List upcoming events
+        List upcoming events from "Free Food Cal" calendar
 
         Args:
             days: Number of days to look ahead
@@ -221,12 +299,16 @@ class GoogleCalendarClient:
         if not self.service:
             self.authenticate()
 
+        # Get or create the "Free Food Cal" calendar
+        if not self.calendar_id:
+            self.calendar_id = self.get_or_create_calendar('Free Food Cal')
+
         try:
             now = datetime.utcnow().isoformat() + 'Z'
             future = (datetime.utcnow() + timedelta(days=days)).isoformat() + 'Z'
 
             events_result = self.service.events().list(
-                calendarId='primary',
+                calendarId=self.calendar_id,
                 timeMin=now,
                 timeMax=future,
                 singleEvents=True,

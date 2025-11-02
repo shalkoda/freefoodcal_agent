@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS llm_usage (
 
     -- Usage details
     email_id TEXT,
-    purpose TEXT,  -- 'extraction', 'filtering', 'classification'
+    purpose TEXT,  
 
     -- Request details
     input_tokens INTEGER,

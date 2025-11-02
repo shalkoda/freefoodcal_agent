@@ -37,7 +37,9 @@ def index():
     return render_template('index.html',
                           stats=stats,
                           recent_events=recent_events,
-                          food_stats=food_stats)
+                          food_stats=food_stats,
+                          google_authenticated=session.get('google_authenticated', False),
+                          microsoft_authenticated=session.get('microsoft_authenticated', False))
 
 
 @app.route('/scan', methods=['POST'])
@@ -106,8 +108,16 @@ def google_login():
         calendar_client = GoogleCalendarClient()
         auth_url = calendar_client.get_auth_url()
         return redirect(auth_url)
+    except FileNotFoundError:
+        return render_template('oauth_callback.html',
+                             service='Google Calendar',
+                             success=False,
+                             error='credentials.json file not found or empty. Please add your Google OAuth credentials.'),
     except Exception as e:
-        return f"Error: {e}", 500
+        return render_template('oauth_callback.html',
+                             service='Google Calendar',
+                             success=False,
+                             error=f'Error: {str(e)}'), 500
 
 
 @app.route('/auth/google/callback')

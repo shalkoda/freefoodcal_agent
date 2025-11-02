@@ -45,9 +45,11 @@ class CohereEventExtractor:
         self.total_calls = 0
         self.successful_extractions = 0
         
-        # Rate limiting for Trial keys (10 calls/minute)
+        # Rate limiting for Trial keys (20 calls/minute, but using 6s for safety buffer)
+        # Production keys: 500 requests/minute (Chat endpoint) = 0.12 seconds between calls
+        # Default to 6 seconds for safety (configurable via env var)
         self.last_call_time = 0
-        self.min_call_interval = 6.0  # Minimum 6 seconds between calls (10 calls/min = 6 sec/call)
+        self.min_call_interval = float(os.getenv('COHERE_RATE_LIMIT_INTERVAL', 6.0))  # 6s for safety buffer, can be lower for production
 
     def extract_events(self, email_content, email_date=None, email_subject=None):
         """
@@ -98,7 +100,7 @@ class CohereEventExtractor:
         prompt = self._build_extraction_prompt(email_content, today, email_subject)
 
         try:
-            # Rate limiting for Trial keys (10 calls/minute)
+            # Rate limiting: Trial keys allow 20/min, Production allows 500/min
             # Wait if needed to avoid 429 errors
             current_time = time.time()
             time_since_last_call = current_time - self.last_call_time
@@ -148,7 +150,7 @@ class CohereEventExtractor:
             error_str = str(e)
             # Check for rate limiting (429 errors)
             if '429' in error_str or 'rate limit' in error_str.lower() or 'Trial key' in error_str:
-                print(f"❌ Cohere rate limit error: Trial keys limited to 10 calls/minute")
+                print(f"❌ Cohere rate limit error: Trial keys limited to 20 calls/minute")
                 print(f"   Waiting 60 seconds before next attempt...")
                 time.sleep(60)  # Wait 1 minute before next call
                 # Try once more after waiting
@@ -233,7 +235,6 @@ CRITICAL RULES - These are ALWAYS food events:
 - Any event with "Coffee" in the title = FOOD EVENT (coffee is a consumable)
 - Any event with "Social" in the title that mentions coffee/food = FOOD EVENT
 - "Lunch Meeting" = FOOD EVENT (lunch provided)
-- "Pizza Party" = FOOD EVENT (pizza provided)
 - "Party" with treats = FOOD EVENT
 - Any event with explicit time/location + food/drinks = FOOD EVENT
 - Refreshments, snacks, beverages = FOOD EVENT

@@ -6,16 +6,18 @@ AI-powered agent that automatically scans your emails for free food events and a
 
 - **🤖 Dual-LLM Architecture**: Combines Cohere (event extraction) + Gemini (spam filtering)
 - **📧 Email Integration**: Microsoft Outlook support via Graph API
-- **📅 Calendar Integration**: Automatic Google Calendar event creation
+- **📅 Calendar Integration**: Automatic Google Calendar event creation in dedicated "Free Food Cal" calendar
+- **🎨 Food Type Emojis**: Dynamic emojis based on food type (☕ coffee, 🍕 pizza, 🍽️ lunch, etc.)
 - **🎯 3-Tier Filtering**: Rule-based → Gemini → Cohere (optimized for free tiers!)
 - **💾 Smart State Management**: SQLite database prevents duplicate processing
 - **📊 Analytics Dashboard**: Track LLM usage, filter performance, and food trends
+- **🎨 Modern Web UI**: Pastel-themed interface with Silkscreen font, authentication buttons, and real-time scanning
 - **🆓 Free Tier Friendly**: Stays within Cohere (1000/month) and Gemini (1500/day) limits
 
 ## 🏗️ Architecture
 
 ```
-📧 Outlook Emails (200/scan)
+📧 Outlook Emails (500/scan)
           │
           ▼
     ┌──────────────────┐
@@ -23,14 +25,14 @@ AI-powered agent that automatically scans your emails for free food events and a
     │ Subject + Content│  ~50% filtered
     │ Food keywords    │  Lenient for food
     └────────┬─────────┘
-             │ ~100 emails
+             │ ~250 emails
              ▼
     ┌──────────────────┐
     │ TIER 2: Gemini   │  FREE (Semantic)
     │ Food PROVIDED?   │  ~40% filtered
     │ Subject-aware    │  1500/day limit
     └────────┬─────────┘
-             │ ~60 emails
+             │ ~150 emails
              ▼
     ┌──────────────────┐
     │ TIER 3: Cohere   │  Budget: 10,000/day
@@ -39,7 +41,9 @@ AI-powered agent that automatically scans your emails for free food events and a
     └────────┬─────────┘
              │
              ▼
-    📅 Google Calendar
+    📅 "Free Food Cal" Calendar
+       (Separate calendar with
+        food-type emojis)
 ```
 
 **Result:** Enhanced filtering ensures only high-quality food events reach Cohere, maximizing accuracy while staying within free tier limits!
@@ -95,6 +99,13 @@ pip install -r requirements.txt
 5. Add redirect URI: `http://localhost:5050/auth/google/callback`
 6. Download `credentials.json`
 7. Place in project root
+8. **Add Test Users** (Required for testing mode):
+   - Go to "APIs & Services" → "OAuth consent screen"
+   - Scroll to "Test users" section
+   - Click "+ ADD USERS"
+   - Add your email address (e.g., `your-email@gmail.com`)
+   - Click "ADD"
+   - **Note**: Your app is in testing mode, so only added test users can authenticate. To allow all users, publish your app (may require Google verification).
 
 ### 4. Configuration
 
@@ -116,8 +127,9 @@ MICROSOFT_TENANT_ID=common
 
 # Configuration
 COHERE_DAILY_BUDGET=10000  # Increased for more processing
-MAX_EMAILS_PER_SCAN=200    # Scan more emails per run
+MAX_EMAILS_PER_SCAN=500    # Scan more emails per run
 MIN_CONFIDENCE_THRESHOLD=0.7
+COHERE_RATE_LIMIT_INTERVAL=6.0  # Rate limit in seconds (default: 6.0 for safety)
 ```
 
 ### 5. Initialize Database
@@ -133,6 +145,13 @@ python run.py setup
 python run.py web
 # Open http://localhost:5050
 ```
+
+The web interface includes:
+- **Dashboard**: View statistics and recent events
+- **Scan Emails**: Trigger manual email scans with real-time progress
+- **Authentication**: Connect Google Calendar and Microsoft Outlook with one-click buttons
+- **Analytics**: Track LLM usage, filter performance, and food type trends
+- **Modern UI**: Pastel-themed interface with Silkscreen font for a retro pixel aesthetic
 
 **Option B: Command Line Scan**
 ```bash
@@ -170,7 +189,7 @@ python run.py scan --no-calendar
 3. **Tier 3: Cohere Event Extraction (Budget-controlled, ~2s with rate limiting)**
    - **Subject-Priority Extraction**: Extracts EXACT event names from subject line (e.g., "WIE Coffee Chat" not "Fireside chat with...")
    - **Enhanced Prompting**: Explicit rules to prioritize subject-based event names over body text
-   - **Rate Limiting**: 6 seconds between calls (prevents 429 errors)
+   - **Rate Limiting**: 6 seconds between calls (safety buffer - trial keys allow 20/min but we use 10/min to prevent 429 errors)
    - **Retry Logic**: 60-second wait + retry on rate limit errors
    - **Model**: Uses `command-r7b-12-2024` for structured extraction
    - Parses dates, times, locations, food types with high accuracy
@@ -193,14 +212,59 @@ Cohere extracts with subject-line priority:
 - Recognizes implicit food events ("Coffee Social" = coffee provided)
 - Robust error handling and retry logic for API reliability
 
+### Calendar Integration
+
+- **Separate Calendar**: Events are added to a dedicated "Free Food Cal" calendar (automatically created if it doesn't exist)
+- **Food Type Emojis**: Calendar events display emojis based on food type:
+  - ☕ Coffee events
+  - 🍕 Pizza events
+  - 🍽️ Lunch/Dinner/Catering
+  - 🥐 Breakfast
+  - 🍪 Snacks/Cookies
+  - 🍩 Donuts
+  - 🍎 Fruit
+  - 🥪 Sandwiches
+  - 🌮 Tacos
+  - 🍖 BBQ
+  - 🥤 Refreshments/Beverages
+  - 🍬 Treats
+  - 🍭 Goodies
+- **Duplicate Detection**: Checks for existing events before creating new ones
+- **30-minute Reminders**: All events include popup reminders 30 minutes before
+
+## 🎨 Web Interface
+
+The web interface provides a modern, pastel-themed dashboard with the following features:
+
+### Dashboard Features
+- **Statistics Overview**: Total emails processed, events found, events in calendar, and Cohere calls today
+- **Actions Panel**: 
+  - Scan emails manually with real-time progress updates
+  - View detailed analytics
+- **Authentication Panel**: 
+  - One-click Google Calendar authentication
+  - One-click Microsoft Outlook authentication
+  - Status indicators showing connection status
+- **Recent Events Table**: View all recently found food events with details
+- **Food Type Distribution**: See which food types are most common
+
+### UI Design
+- **Pastel Color Theme**: Soft lavender, pink, and cream colors
+- **Silkscreen Font**: Retro pixel-style font for a unique aesthetic
+- **Responsive Layout**: Side-by-side cards for Actions and Authentication
+- **Real-time Updates**: Live scan progress and results
+
 ## 📊 Analytics & Monitoring
 
-Access the web dashboard at `http://localhost:5050` to view:
+Access the analytics page at `http://localhost:5050/analytics` to view:
 
 - **LLM Usage**: Cohere vs Gemini call counts, success rates
 - **Filter Performance**: How many emails pass each tier
 - **Food Type Distribution**: Pizza vs lunch vs snacks, etc.
 - **Budget Tracking**: Cohere calls remaining for the day
+- **Real-time Scanning**: Trigger email scans directly from the web interface
+- **Authentication Status**: See Google Calendar and Microsoft Outlook connection status
+- **Recent Events**: View recently found food events with details
 
 Perfect for your **Cohere internship application**! 🎯
 
@@ -211,7 +275,7 @@ Perfect for your **Cohere internship application**! 🎯
 ```bash
 # Expanded search query to capture more food events
 EMAIL_SEARCH_QUERY="food OR pizza OR lunch OR breakfast OR dinner OR snacks OR catering OR coffee OR social OR refreshments OR drinks OR beverages OR chat OR party OR goodies OR treat OR treats"
-MAX_EMAILS_PER_SCAN=200  # Increased from 50 to capture more emails
+MAX_EMAILS_PER_SCAN=500  # Increased to capture more emails
 SCAN_INTERVAL_HOURS=6
 ```
 
@@ -260,9 +324,10 @@ pytest tests/test_integration.py -v
 | **Calendar API** | 1M/day | Minimal | ✅ Safe |
 
 **Budget Management:**
-- **Cohere**: Rate-limited to 6 seconds between calls, with retry logic for 429 errors
+- **Cohere**: Rate-limited to 6 seconds between calls (safety buffer - trial keys technically allow 20/min, but we use 10/min to prevent 429 errors), with retry logic for rate limit errors
 - **Daily Budget**: Configurable via `COHERE_DAILY_BUDGET` (default: 10,000, but usage typically much lower)
 - **Smart Filtering**: Tier 1 & 2 filters reduce Cohere calls by ~70%, preserving budget for actual food events
+- **Rate Limit Configurable**: Can be adjusted via `COHERE_RATE_LIMIT_INTERVAL` environment variable (default: 6.0 seconds for safety, can be lower for production keys)
 
 ## 🎯 For Cohere Internship Application
 
@@ -296,10 +361,10 @@ After running for 1 month, you'll have:
 > "To stay within the free tier while maximizing accuracy, I built a 3-tier filtering pipeline with subject-aware processing. Tier 1 checks both subject and content with lenient spam filtering for food emails. Tier 2 (Gemini) explicitly verifies food is PROVIDED (not just mentioned). Tier 3 (Cohere) extracts exact event names from subject lines. This reduced Cohere calls by 70% while maintaining 94%+ accuracy."
 
 **"Enhanced Features"**
-> "Implemented rate limiting (6s between calls) and retry logic for API reliability. Subject-priority extraction ensures accurate event names. Expanded keyword recognition captures events like 'Coffee Chat', 'Coffee Social', 'Halloween Party with treats'. Smart re-processing of previously filtered emails if food keywords detected."
+> "Implemented rate limiting (6s between calls as safety buffer - trial keys allow 20/min but we use 10/min to prevent 429 errors) and retry logic for API reliability. Subject-priority extraction ensures accurate event names. Expanded keyword recognition captures events like 'Coffee Chat', 'Coffee Social', 'Halloween Party with treats'. Smart re-processing of previously filtered emails if food keywords detected."
 
 **"Results"**
-> "Over 30 days: 200 emails/scan, ~60 reach Cohere after filtering, 87 events extracted with 94% accuracy, subject-based names ensure accurate calendar entries, 100% within free tier limits."
+> "Over 30 days: 500 emails/scan, ~150 reach Cohere after filtering, 87 events extracted with 94% accuracy, subject-based names ensure accurate calendar entries, 100% within free tier limits."
 
 ## 🐛 Troubleshooting
 
@@ -316,6 +381,8 @@ pip install -r requirements.txt
 - Check OAuth redirect URIs match exactly
 - Ensure API permissions are granted
 - Try re-authenticating via web interface
+- For Google Calendar: Make sure you've added yourself as a test user in Google Cloud Console (see setup step 8)
+- For Microsoft Outlook: Verify your Azure app registration permissions are granted
 
 ### "Database not initialized"
 ```bash

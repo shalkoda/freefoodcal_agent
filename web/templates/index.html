@@ -20,13 +20,30 @@
     </div>
 </div>
 
-<div class="card">
-    <h2>Actions</h2>
-    <div style="text-align: center; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
-        <button class="btn" onclick="triggerScan()">🔍 Scan Emails Now</button>
-        <a href="/analytics" class="btn btn-secondary">📊 View Analytics</a>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+    <div class="card">
+        <h2>Actions</h2>
+        <div style="text-align: center; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-top: 15px;">
+            <button class="btn" onclick="triggerScan()">🔍 Scan Emails Now</button>
+            <a href="/analytics" class="btn btn-secondary">📊 View Analytics</a>
+        </div>
+        <div id="scan-status" style="margin-top: 15px;"></div>
     </div>
-    <div id="scan-status" style="margin-top: 15px;"></div>
+    <div class="card">
+        <h2>Authentication</h2>
+        <div style="text-align: center; display: flex; flex-direction: column; gap: 15px; justify-content: center; margin-top: 15px;">
+            {% if google_authenticated %}
+                <span style="color: #66a866; font-size: 0.9em; padding: 8px 16px; border: 1px solid #66a866; display: inline-block;">✅ Google Calendar Connected</span>
+            {% else %}
+                <a href="/auth/google/login" class="btn" style="background: #fefefe; border: 2px solid #d4a5d9; color: #b896c6;">🔐 Connect Google Calendar</a>
+            {% endif %}
+            {% if microsoft_authenticated %}
+                <span style="color: #66a866; font-size: 0.9em; padding: 8px 16px; border: 1px solid #66a866; display: inline-block;">✅ Microsoft Outlook Connected</span>
+            {% else %}
+                <a href="/auth/microsoft/login" class="btn" style="background: #fefefe; border: 2px solid #d4a5d9; color: #b896c6;">📧 Connect Microsoft Outlook</a>
+            {% endif %}
+        </div>
+    </div>
 </div>
 
 <div class="card">
