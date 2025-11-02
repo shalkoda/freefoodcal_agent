@@ -2,7 +2,7 @@
 
 As a broke college student, a good chunk of my weekly food intake comes from free food events on campus, but I'd miss half of them because who has time to dig through 500+ emails looking for events scattered across campus? So I built this AI agent that automatically scans my emails and adds all the free meals, coffee, snacks, whatever,directly to my calendar. Now my stomach is full and my wallet is happy and I can still be lazy.
 
-**[⬇️ Jump to Quick Start](#quick-start)**
+**[⬇️ Jump to Quick Start ⬇️](#quick-start)**
 
 ## Features
 - Dual-LLM Architecture: Combines Cohere (event extraction) + Gemini (spam filtering)
@@ -13,32 +13,13 @@ As a broke college student, a good chunk of my weekly food intake comes from fre
 
 ## Tech Stack
 
-<div align="center">
+**Backend:** Python, Flask, SQLite  
+**Frontend:** HTML, CSS  
+**AI/LLM:** Cohere, Gemini  
+**APIs:** Microsoft Graph (Outlook), Google Calendar  
+**Utilities:** BeautifulSoup4, APScheduler
 
-**Backend**
-![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![Flask](https://img.shields.io/badge/Flask-3.0+-000000?style=for-the-badge&logo=flask&logoColor=white)
-![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
-
-**Frontend**
-![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
-![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)
-
-**AI/LLM**
-![Cohere](https://img.shields.io/badge/Cohere-Command--R-FF6B6B?style=for-the-badge&logo=cohere&logoColor=white)
-![Gemini](https://img.shields.io/badge/Gemini-1.5--Flash-4285F4?style=for-the-badge&logo=google&logoColor=white)
-
-**APIs**
-![Microsoft Graph](https://img.shields.io/badge/Microsoft%20Graph-Outlook-0078D4?style=for-the-badge&logo=microsoft-outlook&logoColor=white)
-![Google Calendar](https://img.shields.io/badge/Google%20Calendar-API-4285F4?style=for-the-badge&logo=google-calendar&logoColor=white)
-
-**Utilities**
-![BeautifulSoup4](https://img.shields.io/badge/BeautifulSoup4-HTML%20Parsing-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![APScheduler](https://img.shields.io/badge/APScheduler-Task%20Scheduling-FF6B6B?style=for-the-badge)
-
-</div>
-
-## 🏗️ Architecture
+## Architecture
 
 ```mermaid
 flowchart LR
