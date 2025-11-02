@@ -23,11 +23,11 @@ flowchart LR
     C -->|"~150 emails<br/>40% filtered"| D["💎 Tier 3: Cohere<br/><small>Budget • Rate limited</small>"]
     D --> E["📅 Free Food Cal<br/><small>☕ 🍕 🍽️</small>"]
     
-    style A fill:#fff8f0,stroke:#d4a5d9,stroke-width:3px
-    style B fill:#e8d5e9,stroke:#c9a8d9,stroke-width:3px
-    style C fill:#e3f2fd,stroke:#90caf9,stroke-width:3px
-    style D fill:#d1ecf1,stroke:#64b5f6,stroke-width:3px
-    style E fill:#e8f5e9,stroke:#81c784,stroke-width:3px
+    style A fill:#fff8f0,stroke:#d4a5d9,stroke-width:3px,color:#000000
+    style B fill:#e8d5e9,stroke:#c9a8d9,stroke-width:3px,color:#000000
+    style C fill:#e3f2fd,stroke:#90caf9,stroke-width:3px,color:#000000
+    style D fill:#d1ecf1,stroke:#64b5f6,stroke-width:3px,color:#000000
+    style E fill:#e8f5e9,stroke:#81c784,stroke-width:3px,color:#000000
 ```
 
 **Key Details:**
