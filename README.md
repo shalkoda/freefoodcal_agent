@@ -333,11 +333,5 @@ Pull requests welcome! Please:
 
 ---
 
-## Feel Free to Contact!
-
-**Email**: [shalk2@illinois.edu] [bchau3@illinois.edu]
-
----
-
 ⭐ Star this repo if you find it useful!
 🍕 Happy free food hunting!
