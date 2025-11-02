@@ -147,6 +147,22 @@ CREATE TABLE IF NOT EXISTS llm_feedback (
 );
 
 -- ============================================
+-- USER SETTINGS
+-- ============================================
+CREATE TABLE IF NOT EXISTS user_settings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    setting_key TEXT UNIQUE NOT NULL,
+    setting_value TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Initialize default settings
+INSERT OR IGNORE INTO user_settings (setting_key, setting_value) VALUES 
+    ('auto_calendar_enabled', 'false'),
+    ('auto_scan_enabled', 'false'),
+    ('scan_interval_hours', '6');
+
+-- ============================================
 -- INDEXES FOR PERFORMANCE
 -- ============================================
 CREATE INDEX IF NOT EXISTS idx_email_id ON processed_emails(email_id);
@@ -159,3 +175,4 @@ CREATE INDEX IF NOT EXISTS idx_filter_tier ON processed_emails(filter_tier);
 CREATE INDEX IF NOT EXISTS idx_llm_provider ON llm_usage(provider);
 CREATE INDEX IF NOT EXISTS idx_llm_called_at ON llm_usage(called_at);
 CREATE INDEX IF NOT EXISTS idx_scan_date ON filter_stats(scan_date);
+CREATE INDEX IF NOT EXISTS idx_setting_key ON user_settings(setting_key);

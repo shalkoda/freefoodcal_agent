@@ -21,6 +21,37 @@
 </div>
 
 <div class="card">
+    <h2>Auto-Calendar Settings</h2>
+    <div class="settings-section">
+        <div class="setting-item">
+            <div class="setting-info">
+                <h3>Auto-Add to Google Calendar</h3>
+                <p>When enabled, free food events will automatically be added to your Google Calendar</p>
+            </div>
+            <label class="toggle-switch">
+                <input type="checkbox" id="auto-calendar-toggle" 
+                       {% if auto_calendar_enabled %}checked{% endif %}
+                       onchange="toggleAutoCalendar(this.checked)">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+        <div id="calendar-auth-status" style="margin-top: 15px;">
+            {% if not google_authenticated %}
+                <p style="color: #f59e0b; margin-bottom: 10px;">
+                    ⚠️ Google Calendar is not authenticated. 
+                    <a href="/auth/google/login" style="color: #667eea; text-decoration: underline;">Authenticate Now</a>
+                </p>
+            {% else %}
+                <p style="color: #10b981;">
+                    ✅ Google Calendar is authenticated
+                </p>
+            {% endif %}
+        </div>
+        <div id="settings-status" style="margin-top: 10px;"></div>
+    </div>
+</div>
+
+<div class="card">
     <h2>Actions</h2>
     <button class="btn" onclick="triggerScan()">🔍 Scan Emails Now</button>
     <a href="/analytics" class="btn btn-secondary">📊 View Analytics</a>
@@ -105,12 +136,76 @@ function triggerScan() {
                 // Reload page after 2 seconds
                 setTimeout(() => location.reload(), 2000);
             } else {
-                statusDiv.innerHTML = `<p style="color: red;">❌ Error: ${data.error}</p>`;
+                let errorMsg = `<p style="color: red;">❌ Error: ${data.error}</p>`;
+                if (data.requires_auth) {
+                    errorMsg += `<p><a href="/auth/google/login" style="color: #667eea;">Authenticate Google Calendar</a></p>`;
+                }
+                statusDiv.innerHTML = errorMsg;
             }
         })
         .catch(error => {
             statusDiv.innerHTML = `<p style="color: red;">❌ Error: ${error}</p>`;
         });
 }
+
+function toggleAutoCalendar(enabled) {
+    const statusDiv = document.getElementById('settings-status');
+    statusDiv.innerHTML = '<p style="color: #667eea;">💾 Saving settings...</p>';
+
+    fetch('/settings', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            auto_calendar_enabled: enabled
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            statusDiv.innerHTML = `<p style="color: green;">✅ Auto-calendar ${enabled ? 'enabled' : 'disabled'}</p>`;
+            // Check auth status if enabling
+            if (enabled) {
+                checkAuthStatus();
+            }
+            setTimeout(() => {
+                statusDiv.innerHTML = '';
+            }, 3000);
+        } else {
+            statusDiv.innerHTML = `<p style="color: red;">❌ Error: ${data.error}</p>`;
+        }
+    })
+    .catch(error => {
+        statusDiv.innerHTML = `<p style="color: red;">❌ Error: ${error}</p>`;
+    });
+}
+
+function checkAuthStatus() {
+    fetch('/auth/status')
+        .then(response => response.json())
+        .then(data => {
+            const authStatusDiv = document.getElementById('calendar-auth-status');
+            if (!data.google_authenticated) {
+                authStatusDiv.innerHTML = `
+                    <p style="color: #f59e0b; margin-bottom: 10px;">
+                        ⚠️ Google Calendar is not authenticated. 
+                        <a href="/auth/google/login" style="color: #667eea; text-decoration: underline;">Authenticate Now</a>
+                    </p>
+                `;
+            } else {
+                authStatusDiv.innerHTML = `
+                    <p style="color: #10b981;">
+                        ✅ Google Calendar is authenticated
+                    </p>
+                `;
+            }
+        });
+}
+
+// Check auth status on page load
+window.addEventListener('load', function() {
+    checkAuthStatus();
+});
 </script>
 {% endblock %}

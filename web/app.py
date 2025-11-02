@@ -7,6 +7,9 @@ from flask import Flask, render_template, request, redirect, url_for, jsonify, s
 from flask_session import Session
 import os
 import sys
+import threading
+import time
+from datetime import datetime
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -26,6 +29,69 @@ Session(app)
 agent = FoodEventAgent()
 db = Database()
 
+# Background scanning thread
+scanning_thread = None
+scanning_active = False
+
+
+def run_automatic_scan():
+    """Run an automatic scan with calendar integration if enabled"""
+    try:
+        # Check if auto-calendar is enabled
+        auto_calendar_enabled = db.get_auto_calendar_enabled()
+        
+        calendar_client = None
+        if auto_calendar_enabled:
+            try:
+                calendar_client = GoogleCalendarClient()
+                calendar_client.authenticate()
+                print(f"[{datetime.now()}] ✅ Calendar authenticated for auto-scan")
+            except Exception as e:
+                print(f"[{datetime.now()}] ⚠️  Calendar authentication failed: {e}")
+                print(f"[{datetime.now()}] 📧 Continuing scan without calendar...")
+                # Continue without calendar if auth fails
+        
+        print(f"[{datetime.now()}] 🔍 Starting automatic scan...")
+        results = agent.scan_emails(calendar_client)
+        print(f"[{datetime.now()}] ✅ Auto-scan complete: {results['events_found']} events found, {results['events_added']} added to calendar")
+        
+    except Exception as e:
+        print(f"[{datetime.now()}] ❌ Auto-scan error: {e}")
+
+
+def background_scanner():
+    """Background thread that runs periodic scans"""
+    global scanning_active
+    scan_interval_hours = float(db.get_setting('scan_interval_hours', '6'))
+    scan_interval_seconds = scan_interval_hours * 3600
+    
+    while scanning_active:
+        if db.get_auto_scan_enabled():
+            run_automatic_scan()
+        else:
+            print(f"[{datetime.now()}] ℹ️  Auto-scan is disabled, skipping...")
+        
+        # Sleep for the scan interval
+        time.sleep(scan_interval_seconds)
+
+
+def start_background_scanner():
+    """Start the background scanning thread"""
+    global scanning_thread, scanning_active
+    
+    if scanning_thread is None or not scanning_thread.is_alive():
+        scanning_active = True
+        scanning_thread = threading.Thread(target=background_scanner, daemon=True)
+        scanning_thread.start()
+        print(f"[{datetime.now()}] 🚀 Background scanner started")
+
+
+def stop_background_scanner():
+    """Stop the background scanning thread"""
+    global scanning_active
+    scanning_active = False
+    print(f"[{datetime.now()}] 🛑 Background scanner stopped")
+
 
 @app.route('/')
 def index():
@@ -33,25 +99,40 @@ def index():
     stats = db.get_stats()
     recent_events = db.get_recent_events(limit=10)
     food_stats = db.get_food_type_stats()
+    auto_calendar_enabled = db.get_auto_calendar_enabled()
+    google_authenticated = session.get('google_authenticated', False)
 
     return render_template('index.html',
                           stats=stats,
                           recent_events=recent_events,
-                          food_stats=food_stats)
+                          food_stats=food_stats,
+                          auto_calendar_enabled=auto_calendar_enabled,
+                          google_authenticated=google_authenticated)
 
 
 @app.route('/scan', methods=['POST'])
 def scan():
     """Trigger manual email scan"""
     try:
-        # Check if calendar is authenticated
+        # Check if auto-calendar is enabled and if calendar is authenticated
         calendar_client = None
-        if session.get('google_authenticated'):
-            try:
-                calendar_client = GoogleCalendarClient()
-                calendar_client.authenticate()
-            except:
-                pass
+        auto_calendar_enabled = db.get_auto_calendar_enabled()
+        
+        if auto_calendar_enabled:
+            if session.get('google_authenticated'):
+                try:
+                    calendar_client = GoogleCalendarClient()
+                    calendar_client.authenticate()
+                except Exception as e:
+                    print(f"⚠️  Calendar authentication error: {e}")
+                    # Continue without calendar if auth fails
+            else:
+                # Auto-calendar is enabled but not authenticated
+                return jsonify({
+                    'success': False,
+                    'error': 'Auto-calendar is enabled but Google Calendar is not authenticated. Please authenticate first.',
+                    'requires_auth': True
+                }), 400
 
         # Run scan
         results = agent.scan_emails(calendar_client)
@@ -174,9 +255,65 @@ def analytics():
                           food_stats=food_stats)
 
 
+@app.route('/settings', methods=['GET'])
+def get_settings():
+    """Get current settings"""
+    try:
+        return jsonify({
+            'success': True,
+            'settings': {
+                'auto_calendar_enabled': db.get_auto_calendar_enabled(),
+                'auto_scan_enabled': db.get_auto_scan_enabled(),
+                'google_authenticated': session.get('google_authenticated', False)
+            }
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/settings', methods=['POST'])
+def update_settings():
+    """Update settings"""
+    try:
+        data = request.get_json()
+        
+        if 'auto_calendar_enabled' in data:
+            db.set_auto_calendar_enabled(data['auto_calendar_enabled'])
+        
+        if 'auto_scan_enabled' in data:
+            auto_scan_enabled = data['auto_scan_enabled']
+            db.set_auto_scan_enabled(auto_scan_enabled)
+            
+            # Start/stop background scanner based on setting
+            if auto_scan_enabled:
+                start_background_scanner()
+            else:
+                stop_background_scanner()
+        
+        return jsonify({
+            'success': True,
+            'settings': {
+                'auto_calendar_enabled': db.get_auto_calendar_enabled(),
+                'auto_scan_enabled': db.get_auto_scan_enabled()
+            }
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
 if __name__ == '__main__':
     # Validate config
     Config.validate()
+    
+    # Start background scanner if auto-scan is enabled
+    if db.get_auto_scan_enabled():
+        start_background_scanner()
 
     # Run app
     app.run(

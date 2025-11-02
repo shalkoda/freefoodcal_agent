@@ -433,3 +433,76 @@ class Database:
             return stats
         finally:
             conn.close()
+
+    # ========================================
+    # USER SETTINGS
+    # ========================================
+
+    def get_setting(self, setting_key, default_value=None):
+        """
+        Get a user setting value
+        
+        Args:
+            setting_key: Setting key to retrieve
+            default_value: Default value if setting doesn't exist
+            
+        Returns:
+            str: Setting value or default
+        """
+        conn = self._get_connection()
+        try:
+            cursor = conn.execute(
+                "SELECT setting_value FROM user_settings WHERE setting_key = ?",
+                (setting_key,)
+            )
+            result = cursor.fetchone()
+            if result:
+                return result['setting_value']
+            return default_value
+        finally:
+            conn.close()
+
+    def set_setting(self, setting_key, setting_value):
+        """
+        Set a user setting value
+        
+        Args:
+            setting_key: Setting key
+            setting_value: Setting value to store
+            
+        Returns:
+            bool: True if successful
+        """
+        conn = self._get_connection()
+        try:
+            from datetime import datetime
+            conn.execute("""
+                INSERT OR REPLACE INTO user_settings
+                (setting_key, setting_value, updated_at)
+                VALUES (?, ?, ?)
+            """, (setting_key, str(setting_value), datetime.now()))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"❌ Error setting setting: {e}")
+            return False
+        finally:
+            conn.close()
+
+    def get_auto_calendar_enabled(self):
+        """Get whether auto-calendar is enabled"""
+        value = self.get_setting('auto_calendar_enabled', 'false')
+        return value.lower() == 'true'
+
+    def set_auto_calendar_enabled(self, enabled):
+        """Set auto-calendar enabled status"""
+        return self.set_setting('auto_calendar_enabled', 'true' if enabled else 'false')
+
+    def get_auto_scan_enabled(self):
+        """Get whether auto-scan is enabled"""
+        value = self.get_setting('auto_scan_enabled', 'false')
+        return value.lower() == 'true'
+
+    def set_auto_scan_enabled(self, enabled):
+        """Set auto-scan enabled status"""
+        return self.set_setting('auto_scan_enabled', 'true' if enabled else 'false')
