@@ -18,10 +18,10 @@ AI-powered agent that automatically scans your emails for free food events and a
 
 ```mermaid
 flowchart LR
-    A[📧 Outlook<br/>Emails<br/>500/scan] -->|500 emails| B[🔍 Tier 1<br/>Heuristic<br/>FREE]
-    B -->|~250 emails<br/>50% filtered| C[🤖 Tier 2<br/>Gemini<br/>FREE]
-    C -->|~150 emails<br/>40% filtered| D[💎 Tier 3<br/>Cohere<br/>Budget]
-    D --> E[📅 Calendar<br/>Free Food Cal<br/>☕🍕🍽️]
+    A["📧 Outlook Emails<br/><small>500 emails/scan</small>"] -->|"500 emails"| B["🔍 Tier 1: Heuristic<br/><small>FREE • Rule-based</small>"]
+    B -->|"~250 emails<br/>50% filtered"| C["🤖 Tier 2: Gemini<br/><small>FREE • Semantic filter</small>"]
+    C -->|"~150 emails<br/>40% filtered"| D["💎 Tier 3: Cohere<br/><small>Budget • Rate limited</small>"]
+    D --> E["📅 Free Food Cal<br/><small>☕ 🍕 🍽️</small>"]
     
     style A fill:#fff8f0,stroke:#d4a5d9,stroke-width:3px
     style B fill:#e8d5e9,stroke:#c9a8d9,stroke-width:3px
