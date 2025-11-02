@@ -16,34 +16,18 @@ AI-powered agent that automatically scans your emails for free food events and a
 
 ## 🏗️ Architecture
 
-```
-📧 Outlook Emails (500/scan)
-          │
-          ▼
-    ┌──────────────────┐
-    │ TIER 1: Heuristic│  FREE (Rule-based)
-    │ Subject + Content│  ~50% filtered
-    │ Food keywords    │  Lenient for food
-    └────────┬─────────┘
-             │ ~250 emails
-             ▼
-    ┌──────────────────┐
-    │ TIER 2: Gemini   │  FREE (Semantic)
-    │ Food PROVIDED?   │  ~40% filtered
-    │ Subject-aware    │  1500/day limit
-    └────────┬─────────┘
-             │ ~150 emails
-             ▼
-    ┌──────────────────┐
-    │ TIER 3: Cohere   │  Budget: 10,000/day
-    │ Extract events   │  Subject-based names
-    │ Rate limited     │  Structured output
-    └────────┬─────────┘
-             │
-             ▼
-    📅 "Free Food Cal" Calendar
-       (Separate calendar with
-        food-type emojis)
+```mermaid
+flowchart TD
+    A[📧 Outlook Emails<br/>500 emails/scan] --> B[TIER 1: Heuristic<br/>FREE Rule-based<br/>Subject + Content<br/>Food keywords<br/>Lenient for food]
+    B -->|~50% filtered<br/>~250 emails| C[TIER 2: Gemini<br/>FREE Semantic Filter<br/>Food PROVIDED?<br/>Subject-aware<br/>1500/day limit]
+    C -->|~40% filtered<br/>~150 emails| D[TIER 3: Cohere<br/>Budget: 10,000/day<br/>Extract events<br/>Subject-based names<br/>Rate limited: 6s<br/>Structured output]
+    D --> E[📅 Free Food Cal<br/>Separate Calendar<br/>Food-type emojis<br/>☕ 🍕 🍽️ etc.]
+    
+    style A fill:#fff8f0,stroke:#d4a5d9,stroke-width:2px
+    style B fill:#e8d5e9,stroke:#c9a8d9,stroke-width:2px
+    style C fill:#e3f2fd,stroke:#90caf9,stroke-width:2px
+    style D fill:#d1ecf1,stroke:#64b5f6,stroke-width:2px
+    style E fill:#e8f5e9,stroke:#81c784,stroke-width:2px
 ```
 
 **Result:** Enhanced filtering ensures only high-quality food events reach Cohere, maximizing accuracy while staying within free tier limits!
@@ -68,77 +52,26 @@ pip install -r requirements.txt
 
 ### 3. API Setup
 
-#### 3.1 Cohere API (Primary Event Extraction)
+📖 **See [API_SETUP.md](API_SETUP.md) for complete step-by-step instructions** for setting up:
+- Cohere API (event extraction)
+- Google/Gemini API (spam filtering)
+- Microsoft Azure (Outlook/Email)
+- Google Cloud (Calendar)
 
-1. Go to [https://dashboard.cohere.com](https://dashboard.cohere.com)
-2. Sign up / log in
-3. Create an API key (free tier: 1000 calls/month)
-4. Copy the key
+**Quick summary:**
+1. Get API keys from each service
+2. Configure OAuth apps (Azure & Google Cloud)
+3. Download `credentials.json` from Google Cloud
+4. Add test users for Google OAuth (required for testing mode)
+5. Copy `.env.example` to `.env` and add your keys
 
-#### 3.2 Google/Gemini API (Spam Filtering)
-
-1. Go to [https://ai.google.dev](https://ai.google.dev)
-2. Get API key for Gemini (free tier: 1500 requests/day)
-3. Copy the key
-
-#### 3.3 Microsoft Azure (Outlook/Email)
-
-1. Go to [Azure Portal](https://portal.azure.com)
-2. Register a new app in "App registrations"
-3. Add redirect URI: `http://localhost:5050/auth/microsoft/callback`
-4. Grant permissions: `User.Read`, `Mail.Read`
-5. Generate client secret
-6. Copy Client ID, Client Secret, Tenant ID
-
-#### 3.4 Google Cloud (Calendar)
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com)
-2. Create a new project
-3. Enable Google Calendar API
-4. Create OAuth 2.0 credentials
-5. Add redirect URI: `http://localhost:5050/auth/google/callback`
-6. Download `credentials.json`
-7. Place in project root
-8. **Add Test Users** (Required for testing mode):
-   - Go to "APIs & Services" → "OAuth consent screen"
-   - Scroll to "Test users" section
-   - Click "+ ADD USERS"
-   - Add your email address (e.g., `your-email@gmail.com`)
-   - Click "ADD"
-   - **Note**: Your app is in testing mode, so only added test users can authenticate. To allow all users, publish your app (may require Google verification).
-
-### 4. Configuration
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env` with your API keys:
-
-```bash
-# LLM APIs
-COHERE_API_KEY=your_cohere_key_here
-GOOGLE_API_KEY=your_gemini_key_here
-
-# Microsoft (Outlook)
-MICROSOFT_CLIENT_ID=your_client_id
-MICROSOFT_CLIENT_SECRET=your_client_secret
-MICROSOFT_TENANT_ID=common
-
-# Configuration
-COHERE_DAILY_BUDGET=10000  # Increased for more processing
-MAX_EMAILS_PER_SCAN=500    # Scan more emails per run
-MIN_CONFIDENCE_THRESHOLD=0.7
-COHERE_RATE_LIMIT_INTERVAL=6.0  # Rate limit in seconds (default: 6.0 for safety)
-```
-
-### 5. Initialize Database
+### 4. Initialize Database
 
 ```bash
 python run.py setup
 ```
 
-### 6. Run the Application
+### 5. Run the Application
 
 **Option A: Web Interface** (Recommended)
 ```bash
@@ -294,7 +227,7 @@ GEMINI_MODEL=gemini-1.5-flash  # Updated from gemini-1.5-flash-latest
 ### Confidence Thresholds
 
 ```bash
-MIN_CONFIDENCE_THRESHOLD=0.7  # Only add high-confidence events
+MIN_CONFIDENCE_THRESHOLD=0.75  # Only add high-confidence events
 GEMINI_FILTER_THRESHOLD=0.5   # Semantic filter sensitivity
 ```
 
