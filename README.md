@@ -1,21 +1,38 @@
-# 🍕 Free Food Calendar Agent
+# Free Food Calendar Agent
 
-AI-powered agent that automatically scans your emails for free food events and adds them to Google Calendar.
+As a broke college student, a good chunk of my weekly food intake comes from free food events on campus, but I'd miss half of them because who has time to dig through 500+ emails looking for events scattered across campus? So I built this AI agent that automatically scans my emails and adds all the free meals, coffee, snacks, whatever,directly to my calendar. Now my stomach is full and my wallet is happy and I can still be lazy.
 
-## 🛠️ Tech Stack
+**[⬇️ Jump to Quick Start](#quick-start)**
+
+## Features
+- Dual-LLM Architecture: Combines Cohere (event extraction) + Gemini (spam filtering)
+- Calendar Integration: Automatic Google Calendar event creation in dedicated "Free Food Cal" calendar
+- Food Type Emojis: Dynamic emojis based on food type (☕ coffee, 🍕 pizza, 🍽️ lunch, etc.)
+- Modern Web UI + Analytics Dashboard: Responsive pastel-themed interface with Silkscreen font, Track LLM usage, filter performance, and food trends
+- Free Tier Friendly: Stays within Cohere (1000/month) and Gemini (1500/day) limits
+
+## Tech Stack
 
 <div align="center">
 
+**Backend**
 ![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Flask](https://img.shields.io/badge/Flask-3.0+-000000?style=for-the-badge&logo=flask&logoColor=white)
 ![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
 
+**Frontend**
+![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
+![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)
+
+**AI/LLM**
 ![Cohere](https://img.shields.io/badge/Cohere-Command--R-FF6B6B?style=for-the-badge&logo=cohere&logoColor=white)
 ![Gemini](https://img.shields.io/badge/Gemini-1.5--Flash-4285F4?style=for-the-badge&logo=google&logoColor=white)
 
+**APIs**
 ![Microsoft Graph](https://img.shields.io/badge/Microsoft%20Graph-Outlook-0078D4?style=for-the-badge&logo=microsoft-outlook&logoColor=white)
 ![Google Calendar](https://img.shields.io/badge/Google%20Calendar-API-4285F4?style=for-the-badge&logo=google-calendar&logoColor=white)
 
+**Utilities**
 ![BeautifulSoup4](https://img.shields.io/badge/BeautifulSoup4-HTML%20Parsing-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![APScheduler](https://img.shields.io/badge/APScheduler-Task%20Scheduling-FF6B6B?style=for-the-badge)
 
@@ -107,7 +124,7 @@ python run.py scan
 python run.py scan --no-calendar
 ```
 
-## 📖 How It Works
+## How It Works
 
 ### 3-Tier Filtering Pipeline
 
@@ -159,24 +176,11 @@ Cohere extracts with subject-line priority:
 ### Calendar Integration
 
 - **Separate Calendar**: Events are added to a dedicated "Free Food Cal" calendar (automatically created if it doesn't exist)
-- **Food Type Emojis**: Calendar events display emojis based on food type:
-  - ☕ Coffee events
-  - 🍕 Pizza events
-  - 🍽️ Lunch/Dinner/Catering
-  - 🥐 Breakfast
-  - 🍪 Snacks/Cookies
-  - 🍩 Donuts
-  - 🍎 Fruit
-  - 🥪 Sandwiches
-  - 🌮 Tacos
-  - 🍖 BBQ
-  - 🥤 Refreshments/Beverages
-  - 🍬 Treats
-  - 🍭 Goodies
+- **Food Type Emojis**: Calendar events display emojis based on food type
 - **Duplicate Detection**: Checks for existing events before creating new ones
 - **30-minute Reminders**: All events include popup reminders 30 minutes before
 
-## 🎨 Web Interface
+## Web Interface
 
 The web interface provides a modern, pastel-themed dashboard with the following features:
 
@@ -198,28 +202,26 @@ The web interface provides a modern, pastel-themed dashboard with the following 
 - **Responsive Layout**: Side-by-side cards for Actions and Authentication
 - **Real-time Updates**: Live scan progress and results
 
-## 📊 Analytics & Monitoring
+## Analytics & Monitoring
 
 Access the analytics page at `http://localhost:5050/analytics` to view:
 
 - **LLM Usage**: Cohere vs Gemini call counts, success rates
 - **Filter Performance**: How many emails pass each tier
 - **Food Type Distribution**: Pizza vs lunch vs snacks, etc.
-- **Budget Tracking**: Cohere calls remaining for the day
+- **Budget Tracking**: API calls remaining for the day
 - **Real-time Scanning**: Trigger email scans directly from the web interface
 - **Authentication Status**: See Google Calendar and Microsoft Outlook connection status
 - **Recent Events**: View recently found food events with details
 
-Perfect for your **Cohere internship application**! 🎯
-
-## 🔧 Configuration Options
+## Configuration Options
 
 ### Email Scanning
 
 ```bash
 # Expanded search query to capture more food events
 EMAIL_SEARCH_QUERY="food OR pizza OR lunch OR breakfast OR dinner OR snacks OR catering OR coffee OR social OR refreshments OR drinks OR beverages OR chat OR party OR goodies OR treat OR treats"
-MAX_EMAILS_PER_SCAN=500  # Increased to capture more emails
+MAX_EMAILS_PER_SCAN=500 
 SCAN_INTERVAL_HOURS=6
 ```
 
@@ -229,7 +231,7 @@ SCAN_INTERVAL_HOURS=6
 # Cohere
 COHERE_MODEL=command-r7b-12-2024  # Updated model (command-r-plus deprecated)
 COHERE_TEMPERATURE=0.3  # Low for consistency
-COHERE_DAILY_BUDGET=10000  # Increased budget (was 15)
+COHERE_DAILY_BUDGET=10000  
 
 # Gemini
 GEMINI_MODEL=gemini-1.5-flash  # Updated from gemini-1.5-flash-latest
@@ -242,7 +244,7 @@ MIN_CONFIDENCE_THRESHOLD=0.75  # Only add high-confidence events
 GEMINI_FILTER_THRESHOLD=0.5   # Semantic filter sensitivity
 ```
 
-## 🧪 Testing
+## Testing
 
 ```bash
 # Run tests
@@ -258,7 +260,7 @@ pytest tests/test_gemini_filter.py -v
 pytest tests/test_integration.py -v
 ```
 
-## 📈 Free Tier Limits & Budget Control
+## Free Tier Limits & Budget Control
 
 | Service | Free Tier | Your Usage | Status |
 |---------|-----------|------------|--------|
@@ -273,30 +275,7 @@ pytest tests/test_integration.py -v
 - **Smart Filtering**: Tier 1 & 2 filters reduce Cohere calls by ~70%, preserving budget for actual food events
 - **Rate Limit Configurable**: Can be adjusted via `COHERE_RATE_LIMIT_INTERVAL` environment variable (default: 6.0 seconds for safety, can be lower for production keys)
 
-## 🎯 For Cohere Internship Application
-
-This project showcases:
-
-### ✅ Technical Skills
-- Advanced prompt engineering (context-aware, few-shot)
-- Structured data extraction from unstructured text
-- JSON parsing with robust error handling
-- Cost optimization (hybrid LLM architecture)
-
-### ✅ Production-Ready Code
-- Comprehensive error handling
-- Usage tracking and analytics
-- Database state management
-- API rate limit awareness
-
-### ✅ Metrics to Highlight
-After running for 1 month, you'll have:
-- ~450 Cohere API calls (within free tier!)
-- Event extraction accuracy %
-- Processing time metrics
-- Cost savings from smart filtering
-
-### ✅ Talking Points
+### Takeaways
 
 **"Why Cohere?"**
 > "I chose Cohere's command-r7b-12-2024 specifically for its superior structured extraction capabilities. The challenge was converting ambiguous natural language ('next Tuesday at 2pm') and extracting exact event names from email subjects ('WIE Coffee Chat' not 'Fireside chat with...'). Cohere's consistency and JSON output made it ideal."
@@ -305,12 +284,12 @@ After running for 1 month, you'll have:
 > "To stay within the free tier while maximizing accuracy, I built a 3-tier filtering pipeline with subject-aware processing. Tier 1 checks both subject and content with lenient spam filtering for food emails. Tier 2 (Gemini) explicitly verifies food is PROVIDED (not just mentioned). Tier 3 (Cohere) extracts exact event names from subject lines. This reduced Cohere calls by 70% while maintaining 94%+ accuracy."
 
 **"Enhanced Features"**
-> "Implemented rate limiting (6s between calls as safety buffer - trial keys allow 20/min but we use 10/min to prevent 429 errors) and retry logic for API reliability. Subject-priority extraction ensures accurate event names. Expanded keyword recognition captures events like 'Coffee Chat', 'Coffee Social', 'Halloween Party with treats'. Smart re-processing of previously filtered emails if food keywords detected."
+> "Implemented rate limiting (6s between calls as safety buffer - trial keys allow 20/min but we use 10/min to prevent 429 errors) and retry logic for API reliability. Subject-priority extraction ensures accurate event names. Expanded keyword recognition captures events like 'Coffee Chat', 'Coffee Social', 'Halloween Party with treats' even if food wasn't explicitly mentioned. Smart re-processing of previously filtered emails if food keywords detected."
 
-**"Results"**
-> "Over 30 days: 500 emails/scan, ~150 reach Cohere after filtering, 87 events extracted with 94% accuracy, subject-based names ensure accurate calendar entries, 100% within free tier limits."
+**"Going Forward"**
+> Currently, the agent supports **Microsoft Outlook** via the Microsoft Graph API, which meets our immediate needs since UIUC uses Outlook for all student and faculty email accounts. When hosted, the agent will automatically poll emails once per day, eliminating the need for manual UI interaction. 
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### "COHERE_API_KEY not found"
 - Copy `.env.example` to `.env`
@@ -338,20 +317,12 @@ python run.py setup
 - Run scans less frequently
 - Check `llm_usage` table for actual usage
 
-## 🛣️ Roadmap
 
-- [ ] Slack integration
-- [ ] Teams integration
-- [ ] Feedback loop (mark false positives)
-- [ ] Fine-tune prompts based on feedback
-- [ ] Mobile notifications
-- [ ] Recurring event detection
-
-## 📄 License
+## License
 
 MIT License
 
-## 🤝 Contributing
+## Contributing
 
 Pull requests welcome! Please:
 1. Test with both Cohere and Gemini APIs
