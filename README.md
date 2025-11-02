@@ -2,17 +2,24 @@
 
 AI-powered agent that automatically scans your emails for free food events and adds them to Google Calendar.
 
-## ✨ Features
+## 🛠️ Tech Stack
 
-- **🤖 Dual-LLM Architecture**: Combines Cohere (event extraction) + Gemini (spam filtering)
-- **📧 Email Integration**: Microsoft Outlook support via Graph API
-- **📅 Calendar Integration**: Automatic Google Calendar event creation in dedicated "Free Food Cal" calendar
-- **🎨 Food Type Emojis**: Dynamic emojis based on food type (☕ coffee, 🍕 pizza, 🍽️ lunch, etc.)
-- **🎯 3-Tier Filtering**: Rule-based → Gemini → Cohere (optimized for free tiers!)
-- **💾 Smart State Management**: SQLite database prevents duplicate processing
-- **📊 Analytics Dashboard**: Track LLM usage, filter performance, and food trends
-- **🎨 Modern Web UI**: Pastel-themed interface with Silkscreen font, authentication buttons, and real-time scanning
-- **🆓 Free Tier Friendly**: Stays within Cohere (1000/month) and Gemini (1500/day) limits
+<div align="center">
+
+![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Flask](https://img.shields.io/badge/Flask-3.0+-000000?style=for-the-badge&logo=flask&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
+
+![Cohere](https://img.shields.io/badge/Cohere-Command--R-FF6B6B?style=for-the-badge&logo=cohere&logoColor=white)
+![Gemini](https://img.shields.io/badge/Gemini-1.5--Flash-4285F4?style=for-the-badge&logo=google&logoColor=white)
+
+![Microsoft Graph](https://img.shields.io/badge/Microsoft%20Graph-Outlook-0078D4?style=for-the-badge&logo=microsoft-outlook&logoColor=white)
+![Google Calendar](https://img.shields.io/badge/Google%20Calendar-API-4285F4?style=for-the-badge&logo=google-calendar&logoColor=white)
+
+![BeautifulSoup4](https://img.shields.io/badge/BeautifulSoup4-HTML%20Parsing-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![APScheduler](https://img.shields.io/badge/APScheduler-Task%20Scheduling-FF6B6B?style=for-the-badge)
+
+</div>
 
 ## 🏗️ Architecture
 
