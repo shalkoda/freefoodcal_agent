@@ -178,10 +178,9 @@ The web interface provides a modern, pastel-themed dashboard with the following 
 - **Food Type Distribution**: See which food types are most common
 
 ### UI Design
-- **Pastel Color Theme**: Soft lavender, pink, and cream colors
 - **Silkscreen Font**: Retro pixel-style font for a unique aesthetic
 - **Responsive Layout**: Side-by-side cards for Actions and Authentication
-- **Real-time Updates**: Live scan progress and results
+- **Real-time Updates**: Live scan progress and results pop-up
 
 ## Analytics & Monitoring
 
