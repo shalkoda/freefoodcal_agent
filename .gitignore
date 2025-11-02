@@ -2,6 +2,10 @@
 .env
 .env.local
 
+# secret API key info
+credentials.json
+token.json
+
 # Python
 __pycache__/
 *.py[cod]
