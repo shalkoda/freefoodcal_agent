@@ -84,7 +84,7 @@ python run.py setup
 
 **Option A: Web Interface** (Recommended)
 ```bash
-python run.py web
+python3 run.py web
 # Open http://localhost:5050
 ```
 
@@ -97,12 +97,12 @@ The web interface includes:
 
 **Option B: Command Line Scan**
 ```bash
-python run.py scan
+python3 run.py scan
 ```
 
 **Option C: Scan without Calendar**
 ```bash
-python run.py scan --no-calendar
+python3 run.py scan --no-calendar
 ```
 
 ## How It Works
