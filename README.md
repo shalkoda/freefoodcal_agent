@@ -77,7 +77,7 @@ pip install -r requirements.txt
 ### 4. Initialize Database
 
 ```bash
-python run.py setup
+python3 run.py setup
 ```
 
 ### 5. Run the Application
