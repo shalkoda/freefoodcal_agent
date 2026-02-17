@@ -165,6 +165,26 @@ Cohere extracts with subject-line priority:
 
 The web interface provides a modern, pastel-themed dashboard with the following features:
 
+### Screenshots
+
+**Dashboard**
+
+| Light Mode | Dark Mode |
+|:---:|:---:|
+| ![Dashboard Light](ui-samples/lightmode1.png) | ![Dashboard Dark](ui-samples/darkmode1.png) |
+
+**Scan in Progress**
+
+| Light Mode | Dark Mode |
+|:---:|:---:|
+| ![Scan Light](ui-samples/lightmode2.png) | ![Scan Dark](ui-samples/darkmode2.png) |
+
+**Analytics**
+
+| Light Mode | Dark Mode |
+|:---:|:---:|
+| ![Analytics Light](ui-samples/lightmode-a.png) | ![Analytics Dark](ui-samples/darkmode-a.png) |
+
 ### Dashboard Features
 - **Statistics Overview**: Total emails processed, events found, events in calendar, and Cohere calls today
 - **Actions Panel**: 
