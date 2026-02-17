@@ -8,6 +8,74 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-main: #fff8f0;
+            --color-primary: #8b6f9e;
+            --color-accent: #b896c6;
+            --color-border: #c9a8d9;
+            --color-border-alt: #d4a5d9;
+            --card-bg: #fefefe;
+            --heading-color: #a18fb8;
+            --header-grad-start: #f8d7da;
+            --header-grad-end: #d1ecf1;
+            --stat-grad-start: #e8d5e9;
+            --stat-grad-end: #d4c5e8;
+            --text-shadow: 1px 1px 0px #ffffff;
+            --text-shadow-sm: 0.5px 0.5px 0px #ffffff;
+            --btn-bg: #fefefe;
+            --btn-hover-bg: #e8d5e9;
+            --btn-hover-color: #8b6f9e;
+            --btn-secondary-border: #ffc8dd;
+            --btn-secondary-color: #ff8fab;
+            --btn-secondary-hover-bg: #ffe5ec;
+            --success-bg: #e8f5e9;
+            --success-color: #66a866;
+            --success-border: #a5d6a7;
+            --info-bg: #e3f2fd;
+            --info-color: #64b5f6;
+            --info-border: #90caf9;
+            --error-color: #ff8fab;
+            --footer-link: #b896c6;
+            --shadow-header: rgba(201, 168, 217, 0.3);
+            --shadow-card: rgba(212, 165, 217, 0.2);
+            --shadow-hover: rgba(212, 165, 217, 0.5);
+            --shadow-btn-secondary: rgba(255, 200, 221, 0.5);
+        }
+
+        [data-theme="dark"] {
+            --bg-main: #1a1520;
+            --color-primary: #d4bae8;
+            --color-accent: #c9a8d9;
+            --color-border: #4a3860;
+            --color-border-alt: #5a4070;
+            --card-bg: #231d2e;
+            --heading-color: #c9b4e0;
+            --header-grad-start: #2d1e2f;
+            --header-grad-end: #1e2d35;
+            --stat-grad-start: #2e2040;
+            --stat-grad-end: #26183a;
+            --text-shadow: 1px 1px 0px #000000;
+            --text-shadow-sm: 0.5px 0.5px 0px #000000;
+            --btn-bg: #2e2840;
+            --btn-hover-bg: #3a2d4a;
+            --btn-hover-color: #d4bae8;
+            --btn-secondary-border: #7a3550;
+            --btn-secondary-color: #ff8fab;
+            --btn-secondary-hover-bg: #4a2535;
+            --success-bg: #1a2e1a;
+            --success-color: #6abf6a;
+            --success-border: #3a6e3a;
+            --info-bg: #1a2240;
+            --info-color: #64b5f6;
+            --info-border: #2a4a7a;
+            --error-color: #ff8fab;
+            --footer-link: #c9a8d9;
+            --shadow-header: rgba(100, 70, 140, 0.5);
+            --shadow-card: rgba(100, 70, 140, 0.3);
+            --shadow-hover: rgba(140, 100, 180, 0.6);
+            --shadow-btn-secondary: rgba(122, 53, 80, 0.5);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -16,11 +84,12 @@
 
         body {
             font-family: 'Silkscreen', 'Courier New', monospace;
-            background: #fff8f0;
-            color: #8b6f9e;
+            background: var(--bg-main);
+            color: var(--color-primary);
             line-height: 1.6;
             font-size: 16px;
             letter-spacing: 0.02em;
+            transition: background 0.3s, color 0.3s;
         }
 
         .container {
@@ -30,44 +99,67 @@
         }
 
         header {
-            background: linear-gradient(135deg, #f8d7da 0%, #d1ecf1 100%);
-            border: 3px solid #c9a8d9;
-            color: #8b6f9e;
+            background: linear-gradient(135deg, var(--header-grad-start) 0%, var(--header-grad-end) 100%);
+            border: 3px solid var(--color-border);
+            color: var(--color-primary);
             padding: 30px 0;
             margin-bottom: 30px;
-            box-shadow: 0 0 20px rgba(201, 168, 217, 0.3);
-            text-shadow: 1px 1px 0px #ffffff;
+            box-shadow: 0 0 20px var(--shadow-header);
+            text-shadow: var(--text-shadow);
+            position: relative;
         }
 
         header h1 {
             font-size: 2.5em;
             margin-bottom: 10px;
-            text-shadow: 1px 1px 0px #ffffff;
-            color: #a18fb8;
+            text-shadow: var(--text-shadow);
+            color: var(--heading-color);
             font-weight: 400;
         }
 
         header p {
             font-size: 1.1em;
             opacity: 0.9;
-            text-shadow: 1px 1px 0px #ffffff;
-            color: #8b6f9e;
+            text-shadow: var(--text-shadow);
+            color: var(--color-primary);
             font-weight: 400;
         }
 
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--btn-bg);
+            border: 2px solid var(--color-border);
+            color: var(--color-accent);
+            padding: 8px 14px;
+            cursor: pointer;
+            font-family: 'Silkscreen', monospace;
+            font-size: 0.8em;
+            transition: all 0.2s;
+            text-shadow: var(--text-shadow-sm);
+        }
+
+        .theme-toggle:hover {
+            background: var(--btn-hover-bg);
+            color: var(--btn-hover-color);
+            box-shadow: 0 0 10px var(--shadow-hover);
+        }
+
         .card {
-            background: #fefefe;
-            border: 2px solid #d4a5d9;
+            background: var(--card-bg);
+            border: 2px solid var(--color-border-alt);
             padding: 20px;
             margin-bottom: 20px;
-            box-shadow: 0 0 10px rgba(212, 165, 217, 0.2);
+            box-shadow: 0 0 10px var(--shadow-card);
+            transition: background 0.3s, border-color 0.3s;
         }
 
         .card h2 {
             margin-bottom: 15px;
-            color: #b896c6;
+            color: var(--color-accent);
             font-size: 1.5em;
-            text-shadow: 1px 1px 0px #ffffff;
+            text-shadow: var(--text-shadow);
             font-weight: 400;
         }
 
@@ -79,61 +171,62 @@
         }
 
         .stat-box {
-            background: linear-gradient(135deg, #e8d5e9 0%, #d4c5e8 100%);
-            border: 2px solid #c9a8d9;
-            color: #8b6f9e;
+            background: linear-gradient(135deg, var(--stat-grad-start) 0%, var(--stat-grad-end) 100%);
+            border: 2px solid var(--color-border);
+            color: var(--color-primary);
             padding: 20px;
             text-align: center;
-            box-shadow: 0 0 10px rgba(201, 168, 217, 0.3);
+            box-shadow: 0 0 10px var(--shadow-header);
+            transition: background 0.3s;
         }
 
         .stat-box .number {
             font-size: 2.5em;
             font-weight: 400;
             margin-bottom: 5px;
-            text-shadow: 1px 1px 0px #ffffff;
-            color: #a18fb8;
+            text-shadow: var(--text-shadow);
+            color: var(--heading-color);
         }
 
         .stat-box .label {
             font-size: 0.9em;
             opacity: 0.9;
-            text-shadow: 1px 1px 0px #ffffff;
-            color: #8b6f9e;
+            text-shadow: var(--text-shadow);
+            color: var(--color-primary);
             font-weight: 400;
         }
 
         .btn {
             display: inline-block;
             padding: 12px 24px;
-            background: #fefefe;
-            color: #b896c6;
+            background: var(--btn-bg);
+            color: var(--color-accent);
             text-decoration: none;
-            border: 2px solid #d4a5d9;
+            border: 2px solid var(--color-border-alt);
             cursor: pointer;
             font-size: 1em;
             font-family: 'Silkscreen', monospace;
             font-weight: 400;
             transition: all 0.2s;
-            text-shadow: 1px 1px 0px #ffffff;
+            text-shadow: var(--text-shadow);
         }
 
         .btn:hover {
-            background: #e8d5e9;
-            color: #8b6f9e;
-            box-shadow: 0 0 10px rgba(212, 165, 217, 0.5);
+            background: var(--btn-hover-bg);
+            color: var(--btn-hover-color);
+            box-shadow: 0 0 10px var(--shadow-hover);
         }
 
         .btn-secondary {
-            background: #fefefe;
-            border: 2px solid #ffc8dd;
-            color: #ff8fab;
+            background: var(--btn-bg);
+            border: 2px solid var(--btn-secondary-border);
+            color: var(--btn-secondary-color);
         }
 
         .btn-secondary:hover {
-            background: #ffe5ec;
-            color: #ff8fab;
-            box-shadow: 0 0 10px rgba(255, 200, 221, 0.5);
+            background: var(--btn-secondary-hover-bg);
+            color: var(--btn-secondary-color);
+            box-shadow: 0 0 10px var(--shadow-btn-secondary);
         }
 
         table {
@@ -148,20 +241,20 @@
         }
 
         th {
-            background: linear-gradient(135deg, #f8d7da 0%, #d1ecf1 100%);
-            border: 2px solid #c9a8d9;
-            border-bottom: 2px solid #c9a8d9;
+            background: linear-gradient(135deg, var(--header-grad-start) 0%, var(--header-grad-end) 100%);
+            border: 2px solid var(--color-border);
+            border-bottom: 2px solid var(--color-border);
             font-weight: 400;
-            color: #8b6f9e;
+            color: var(--color-primary);
             font-size: 0.95em;
-            text-shadow: 1px 1px 0px #ffffff;
+            text-shadow: var(--text-shadow);
         }
 
         td {
-            border-bottom: 1px solid #d4a5d9;
+            border-bottom: 1px solid var(--color-border-alt);
             font-size: 0.9em;
-            color: #8b6f9e;
-            text-shadow: 0.5px 0.5px 0px #ffffff;
+            color: var(--color-primary);
+            text-shadow: var(--text-shadow-sm);
         }
 
         .badge {
@@ -170,38 +263,100 @@
             border: 1px solid;
             font-size: 0.85em;
             font-weight: 500;
-            text-shadow: 0.5px 0.5px 0px #ffffff;
+            text-shadow: var(--text-shadow-sm);
         }
 
         .badge-success {
-            background: #e8f5e9;
-            color: #66a866;
-            border-color: #a5d6a7;
+            background: var(--success-bg);
+            color: var(--success-color);
+            border-color: var(--success-border);
         }
 
         .badge-info {
-            background: #e3f2fd;
-            color: #64b5f6;
-            border-color: #90caf9;
+            background: var(--info-bg);
+            color: var(--info-color);
+            border-color: var(--info-border);
         }
 
         footer {
             text-align: center;
             padding: 20px;
-            color: #8b6f9e;
+            color: var(--color-primary);
             margin-top: 40px;
             font-size: 0.9em;
-            text-shadow: 0.5px 0.5px 0px #ffffff;
+            text-shadow: var(--text-shadow-sm);
         }
 
         footer a {
-            color: #b896c6;
+            color: var(--footer-link);
             text-decoration: none;
         }
 
         footer a:hover {
-            color: #8b6f9e;
-            text-shadow: 0 0 5px rgba(139, 111, 158, 0.5);
+            color: var(--color-primary);
+            text-shadow: 0 0 5px var(--shadow-header);
+        }
+
+        /* Utility classes for JS-generated content and inline replacements */
+        .status-scanning {
+            font-size: 1em;
+            color: var(--color-primary);
+            text-shadow: var(--text-shadow-sm);
+        }
+
+        .status-error {
+            font-size: 1em;
+            color: var(--error-color);
+            text-shadow: var(--text-shadow-sm);
+        }
+
+        .scan-result-box {
+            background: var(--card-bg);
+            padding: 15px;
+            border: 2px solid var(--color-border-alt);
+            margin-top: 10px;
+            box-shadow: 0 0 10px var(--shadow-card);
+        }
+
+        .scan-result-title {
+            color: var(--color-primary);
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 1em;
+            text-shadow: var(--text-shadow-sm);
+        }
+
+        .scan-result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            font-size: 0.9em;
+            color: var(--color-primary);
+            text-shadow: var(--text-shadow-sm);
+        }
+
+        .auth-connected {
+            color: var(--success-color);
+            font-size: 0.9em;
+            padding: 8px 16px;
+            border: 1px solid var(--success-color);
+            display: inline-block;
+        }
+
+        .oauth-success-icon {
+            color: var(--success-color);
+            font-size: 3em;
+        }
+
+        .oauth-error-icon {
+            color: var(--error-color);
+            font-size: 3em;
+        }
+
+        .oauth-error-text {
+            margin: 20px 0;
+            color: var(--color-primary);
+            opacity: 0.7;
         }
 
     </style>
@@ -212,6 +367,7 @@
         <div class="container">
             <h1>🍕 Free Food Calendar Agent</h1>
             <p>{% block subtitle %}Powered by Cohere AI + Gemini{% endblock %}</p>
+            <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn">🌙 Dark</button>
         </div>
     </header>
 
@@ -223,6 +379,37 @@
         <p>Built with Cohere (Event Extraction) + Gemini (Filtering) | <a href="/analytics">Analytics</a></p>
     </footer>
 
+    <script>
+        // Apply saved theme immediately to avoid flash
+        (function() {
+            const saved = localStorage.getItem('theme');
+            if (saved === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const btn = document.getElementById('theme-btn');
+            if (html.getAttribute('data-theme') === 'dark') {
+                html.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'light');
+                btn.textContent = '🌙 Dark';
+            } else {
+                html.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+                btn.textContent = '☀️ Light';
+            }
+        }
+
+        // Sync button label on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            const btn = document.getElementById('theme-btn');
+            if (document.documentElement.getAttribute('data-theme') === 'dark') {
+                btn.textContent = '☀️ Light';
+            }
+        });
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

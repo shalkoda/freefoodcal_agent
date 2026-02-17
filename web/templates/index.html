@@ -33,14 +33,14 @@
         <h2>Authentication</h2>
         <div style="text-align: center; display: flex; flex-direction: column; gap: 15px; justify-content: center; margin-top: 15px;">
             {% if google_authenticated %}
-                <span style="color: #66a866; font-size: 0.9em; padding: 8px 16px; border: 1px solid #66a866; display: inline-block;">✅ Google Calendar Connected</span>
+                <span class="auth-connected">✅ Google Calendar Connected</span>
             {% else %}
-                <a href="/auth/google/login" class="btn" style="background: #fefefe; border: 2px solid #d4a5d9; color: #b896c6;">🔐 Connect Google Calendar</a>
+                <a href="/auth/google/login" class="btn">🔐 Connect Google Calendar</a>
             {% endif %}
             {% if microsoft_authenticated %}
-                <span style="color: #66a866; font-size: 0.9em; padding: 8px 16px; border: 1px solid #66a866; display: inline-block;">✅ Microsoft Outlook Connected</span>
+                <span class="auth-connected">✅ Microsoft Outlook Connected</span>
             {% else %}
-                <a href="/auth/microsoft/login" class="btn" style="background: #fefefe; border: 2px solid #d4a5d9; color: #b896c6;">📧 Connect Microsoft Outlook</a>
+                <a href="/auth/microsoft/login" class="btn">📧 Connect Microsoft Outlook</a>
             {% endif %}
         </div>
     </div>
@@ -107,7 +107,7 @@
 <script>
 function triggerScan() {
     const statusDiv = document.getElementById('scan-status');
-    statusDiv.innerHTML = '<p style="color: #8b6f9e; font-size: 1em; text-shadow: 0.5px 0.5px 0px #ffffff;">🔄 Scanning emails... This may take a minute.</p>';
+    statusDiv.innerHTML = '<p class="status-scanning">🔄 Scanning emails... This may take a minute.</p>';
 
     fetch('/scan', { method: 'POST' })
         .then(response => response.json())
@@ -115,9 +115,9 @@ function triggerScan() {
             if (data.success) {
                 const results = data.results;
                 statusDiv.innerHTML = `
-                    <div style="background: #fefefe; padding: 15px; border: 2px solid #d4a5d9; margin-top: 10px; box-shadow: 0 0 10px rgba(212, 165, 217, 0.3);">
-                        <p style="color: #8b6f9e; font-weight: bold; margin-bottom: 10px; font-size: 1em; text-shadow: 0.5px 0.5px 0px #ffffff;">✅ Scan complete!</p>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9em; color: #8b6f9e; text-shadow: 0.5px 0.5px 0px #ffffff;">
+                    <div class="scan-result-box">
+                        <p class="scan-result-title">✅ Scan complete!</p>
+                        <div class="scan-result-grid">
                             <div><strong>Emails scanned:</strong> ${results.emails_scanned || 0}</div>
                             <div><strong>✅ Passed Tier 1:</strong> ${results.passed_tier1_heuristic || 0}</div>
                             <div><strong>✅ Passed Tier 2:</strong> ${results.passed_tier2_gemini || 0}</div>
@@ -136,11 +136,11 @@ function triggerScan() {
                 // Reload page after 3 seconds
                 setTimeout(() => location.reload(), 3000);
             } else {
-                statusDiv.innerHTML = `<p style="color: #ff8fab; font-size: 1em; text-shadow: 0.5px 0.5px 0px #ffffff;">❌ Error: ${data.error}</p>`;
+                statusDiv.innerHTML = `<p class="status-error">❌ Error: ${data.error}</p>`;
             }
         })
         .catch(error => {
-            statusDiv.innerHTML = `<p style="color: #ff8fab; font-size: 1em; text-shadow: 0.5px 0.5px 0px #ffffff;">❌ Error: ${error}</p>`;
+            statusDiv.innerHTML = `<p class="status-error">❌ Error: ${error}</p>`;
         });
 }
 </script>
