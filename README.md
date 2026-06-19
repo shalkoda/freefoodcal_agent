@@ -1,6 +1,6 @@
 # Free Food Calendar Agent
 
-As a broke college student, a good chunk of my weekly food intake comes from free food events on campus, but I'd miss half of them because who has time to dig through 500+ emails looking for events scattered across campus? So I built this AI agent that automatically scans my emails and adds all the free meals, coffee, snacks, whatever,directly to my calendar. Now my stomach is full and my wallet is happy and I can still be lazy.
+As a broke college student, a good chunk of my weekly food intake comes from free food events on campus, but I'd miss half of them because who has time to dig through 500+ emails looking for events scattered across campus? So I built an agent. Made for UIUC students, works for all outlook users. :D
 
 **[⬇️ Jump to Quick Start ⬇️](#quick-start)**
 
