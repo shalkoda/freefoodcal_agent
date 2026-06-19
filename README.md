@@ -1,6 +1,7 @@
 # Free Food Calendar Agent
 
-As a broke college student, a good chunk of my weekly food intake comes from free food events on campus, but I'd miss half of them because who has time to dig through 500+ emails looking for events scattered across campus? So I built an agent. Made for UIUC students, works for all outlook users. :D
+As a broke college student, a good chunk of my weekly food intake comes from free food events on campus, but I'd miss half of them because who has time to dig through 500+ emails looking for events scattered across campus? 
+So I built an agent. Made for UIUC students, works for all outlook users. :D
 
 **[⬇️ Jump to Quick Start ⬇️](#quick-start)**
 
