@@ -236,7 +236,7 @@ pytest tests/test_integration.py -v
 > "I chose Cohere's command-r7b-12-2024 specifically for its superior structured extraction capabilities. The challenge was converting ambiguous natural language ('next Tuesday at 2pm') and extracting exact event names from email subjects ('WIE Coffee Chat' not 'Fireside chat with...'). Cohere's consistency and JSON output made it ideal."
 
 **"Technical Challenge"**
-> "To stay within the free tier while maximizing accuracy, I built a 3-tier filtering pipeline with subject-aware processing. Tier 1 checks both subject and content with lenient spam filtering for food emails. Tier 2 (Gemini) explicitly verifies food is PROVIDED (not just mentioned). Tier 3 (Cohere) extracts exact event names from subject lines. This reduced Cohere calls by 70% while maintaining 94%+ accuracy."
+> "To stay within the free tier while maximizing accuracy, I built a 3-tier filtering pipeline with subject-aware processing. Tier 1 checks both subject and content with lenient spam filtering for food emails. Tier 2 (Gemini) explicitly verifies food is PROVIDED (not just mentioned). Tier 3 (Cohere) extracts exact event names from subject lines. This reduced Cohere calls by 70% while maintaining 94%+ accuracy. I also like spending $0 on API calls :)."
 
 **"Enhanced Features"**
 > "Implemented rate limiting (6s between calls as safety buffer - trial keys allow 20/min but we use 10/min to prevent 429 errors) and retry logic for API reliability. Subject-priority extraction ensures accurate event names. Expanded keyword recognition captures events like 'Coffee Chat', 'Coffee Social', 'Halloween Party with treats' even if food wasn't explicitly mentioned. Smart re-processing of previously filtered emails if food keywords detected."
